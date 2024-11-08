@@ -8,7 +8,7 @@ You can use this repo like a ROS2 workspace. Specifically, if all the dependenci
 to clone this repo and call `colcon build` to build all the examples:
 
 ```shell
-git clone git@github.com:nodarsensor/hammerhead_ros2.git
+git clone git@github.com:nodarhub/hammerhead_ros2.git
 cd hammerhead_ros2
 colcon build
 ```

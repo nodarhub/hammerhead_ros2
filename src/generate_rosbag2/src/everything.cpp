@@ -21,19 +21,19 @@ int main(int argc, char *argv[]) {
     const std::filesystem::path output_dir = argc > 2 ? argv[2] : (input_dir / "bag");
 
     // Directories that we read
-    const auto depth_dir = input_dir / "depth";
+    const auto disparity_dir = input_dir / "disparity";
     const auto details_dir = input_dir / "details";
     const auto left_rect_dir = input_dir / "left-rect";
     const auto topbot_dir = input_dir / "topbot";
 
     // Topic names
-    std::vector<Topic> topics{{
-        {"nodar/point_cloud", "sensor_msgs/msg/PointCloud2"},
-        {"nodar/left/image_raw", "sensor_msgs/msg/Image"},
-        {"nodar/right/image_raw", "sensor_msgs/msg/Image"},
-        {"nodar/left/image_rect", "sensor_msgs/msg/Image"},
-        {"nodar/depth/image_raw", "sensor_msgs/msg/Image"},
-    }};
+    std::vector <Topic> topics{{
+                                       {"nodar/point_cloud", "sensor_msgs/msg/PointCloud2"},
+                                       {"nodar/left/image_raw", "sensor_msgs/msg/Image"},
+                                       {"nodar/right/image_raw", "sensor_msgs/msg/Image"},
+                                       {"nodar/left/image_rect", "sensor_msgs/msg/Image"},
+                                       {"nodar/disparity/image_raw", "sensor_msgs/msg/Image"},
+                               }};
 
     // Remove old bag output if it exists
     if (std::filesystem::exists(output_dir)) {
@@ -54,23 +54,25 @@ int main(int argc, char *argv[]) {
     // Create the bag writer
     BagWriter bag_writer(output_dir, topics);
 
-    // Load the depth data
-    const auto exrs = getFiles(input_dir / "depth", ".exr");
-    std::cout << "Found " << exrs.size() << " depth maps to convert to point clouds" << std::endl;
-    for (const auto &exr : tq::tqdm(exrs)) {
+    // Load the disparity data
+    const auto disparities = getFiles(disparity_dir, ".tiff");
+    std::cout << "Found " << disparities.size() << " disparity maps to convert to point clouds" << std::endl;
+    for (const auto &disparity: tq::tqdm(disparities)) {
         // Safely load all the images.
-        const auto depth_image = safeLoad(exr, cv::IMREAD_ANYCOLOR | cv::IMREAD_ANYDEPTH, CV_32FC1, exr, "depth image");
+        auto disparity_image = safeLoad(disparity, cv::IMREAD_ANYDEPTH, CV_16UC1, disparity, "disparity image");
+        disparity_image.convertTo(disparity_image, CV_32FC1, 1.0 / 16.0);
         // New versions of the sdk save images as .tiff instead of .png
         // Look for a tiff, and if it doesn't exist, look for a png.
-        const auto left_rect_tiff = left_rect_dir / (exr.stem().string() + ".tiff");
-        const auto left_rect_png = left_rect_dir / (exr.stem().string() + ".png");
+        const auto left_rect_tiff = left_rect_dir / (disparity.stem().string() + ".tiff");
+        const auto left_rect_png = left_rect_dir / (disparity.stem().string() + ".png");
         const auto left_rect_filename = std::filesystem::exists(left_rect_tiff) ? left_rect_tiff : left_rect_png;
-        const auto left_rect = safeLoad(left_rect_filename, cv::IMREAD_COLOR, CV_8UC3, exr, "left rectified image");
-        const auto topbot_tiff = topbot_dir / (exr.stem().string() + ".tiff");
-        const auto topbot_png = topbot_dir / (exr.stem().string() + ".png");
+        const auto left_rect = safeLoad(left_rect_filename, cv::IMREAD_COLOR, CV_8UC3, disparity,
+                                        "left rectified image");
+        const auto topbot_tiff = topbot_dir / (disparity.stem().string() + ".tiff");
+        const auto topbot_png = topbot_dir / (disparity.stem().string() + ".png");
         const auto topbot_filename = std::filesystem::exists(topbot_tiff) ? topbot_tiff : topbot_png;
-        const auto topbot = safeLoad(topbot_filename, cv::IMREAD_COLOR, CV_8UC3, exr, "raw image");
-        if (depth_image.empty() or left_rect.empty() or topbot.empty()) {
+        const auto topbot = safeLoad(topbot_filename, cv::IMREAD_COLOR, CV_8UC3, disparity, "raw image");
+        if (disparity_image.empty() or left_rect.empty() or topbot.empty()) {
             continue;
         }
 
@@ -79,20 +81,20 @@ int main(int argc, char *argv[]) {
         const auto right_raw = topbot.rowRange(topbot.rows / 2, topbot.rows);
 
         // Load the details
-        const auto details_filename = details_dir / (exr.stem().string() + ".csv");
+        const auto details_filename = details_dir / (disparity.stem().string() + ".csv");
         if (not std::filesystem::exists(details_filename)) {
             std::cerr << "Could not find the corresponding details for\n"
-                      << exr << ". This path does not exist:\n"
+                      << disparity << ". This path does not exist:\n"
                       << details_filename << std::endl;
         }
         const Details details(details_filename);
 
         // Write the messages
-        bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, depth_image, left_rect));
+        bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, disparity_image, left_rect));
         bag_writer.write("nodar/left/image_raw", toImageMsg(left_raw, details.left_time));
         bag_writer.write("nodar/right/image_raw", toImageMsg(right_raw, details.right_time));
         bag_writer.write("nodar/left/image_rect", toImageMsg(left_rect, details.left_time));
-        bag_writer.write("nodar/depth/image_raw", toImageMsg(depth_image, details.left_time));
+        bag_writer.write("nodar/disparity/image_raw", toImageMsg(disparity_image, details.left_time));
     }
     std::cout << std::endl;
     return 0;

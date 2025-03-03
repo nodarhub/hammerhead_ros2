@@ -11,9 +11,8 @@
 #include "generate_rosbag2/details.hpp"
 #include "generate_rosbag2/point_filter.hpp"
 
-inline auto toPointCloud2Msg(const Details &details, const cv::Mat &depth_image, const cv::Mat &left_rect) {
-    // Convert the depth map to a point cloud
-    const auto disparity = details.focal_length * details.baseline / depth_image;
+inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
+    // Convert the disparity map to a point cloud
     cv::Mat point_cloud;
     cv::reprojectImageTo3D(disparity, point_cloud, details.projection);
 

@@ -21,14 +21,14 @@ int main(int argc, char *argv[]) {
     const std::filesystem::path output_dir = argc > 2 ? argv[2] : (input_dir / "bag");
 
     // Directories that we read
-    const auto depth_dir = input_dir / "depth";
+    const auto disparity_dir = input_dir / "disparity";
     const auto details_dir = input_dir / "details";
     const auto left_rect_dir = input_dir / "left-rect";
 
     // Topic names
-    std::vector<Topic> topics{{
-        Topic{"nodar/point_cloud", "sensor_msgs/msg/PointCloud2"},
-    }};
+    std::vector <Topic> topics{{
+                                       Topic{"nodar/point_cloud", "sensor_msgs/msg/PointCloud2"},
+                               }};
 
     // Remove old bag output if it exists
     if (std::filesystem::exists(output_dir)) {
@@ -49,31 +49,33 @@ int main(int argc, char *argv[]) {
     // Create the bag writer
     BagWriter bag_writer(output_dir, topics);
 
-    // Load the depth data
-    const auto exrs = getFiles(input_dir / "depth", ".exr");
-    std::cout << "Found " << exrs.size() << " depth maps to convert to point clouds" << std::endl;
-    for (const auto &exr : tq::tqdm(exrs)) {
+    // Load the disparity data
+    const auto disparities = getFiles(disparity_dir, ".tiff");
+    std::cout << "Found " << disparities.size() << " disparity maps to convert to point clouds" << std::endl;
+    for (const auto &disparity: tq::tqdm(disparities)) {
         // Safely load all the images.
-        const auto depth_image = safeLoad(exr, cv::IMREAD_ANYCOLOR | cv::IMREAD_ANYDEPTH, CV_32FC1, exr, "depth image");
-        const auto left_rect_tiff = left_rect_dir / (exr.stem().string() + ".tiff");
-        const auto left_rect_png = left_rect_dir / (exr.stem().string() + ".png");
+        auto disparity_image = safeLoad(disparity, cv::IMREAD_ANYDEPTH, CV_16UC1, disparity, "disparity image");
+        disparity_image.convertTo(disparity_image, CV_32FC1, 1.0 / 16.0);
+        const auto left_rect_tiff = left_rect_dir / (disparity.stem().string() + ".tiff");
+        const auto left_rect_png = left_rect_dir / (disparity.stem().string() + ".png");
         const auto left_rect_filename = std::filesystem::exists(left_rect_tiff) ? left_rect_tiff : left_rect_png;
-        const auto left_rect = safeLoad(left_rect_filename, cv::IMREAD_COLOR, CV_8UC3, exr, "left rectified image");
-        if (depth_image.empty() or left_rect.empty()) {
+        const auto left_rect = safeLoad(left_rect_filename, cv::IMREAD_COLOR, CV_8UC3, disparity,
+                                        "left rectified image");
+        if (disparity_image.empty() or left_rect.empty()) {
             continue;
         }
 
         // Load the details
-        const auto details_filename = details_dir / (exr.stem().string() + ".csv");
+        const auto details_filename = details_dir / (disparity.stem().string() + ".csv");
         if (not std::filesystem::exists(details_filename)) {
             std::cerr << "Could not find the corresponding details for\n"
-                      << exr << ". This path does not exist:\n"
+                      << disparity << ". This path does not exist:\n"
                       << details_filename << std::endl;
         }
         const Details details(details_filename);
 
         // Write the messages
-        bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, depth_image, left_rect));
+        bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, disparity_image, left_rect));
     }
     std::cout << std::endl;
     return 0;

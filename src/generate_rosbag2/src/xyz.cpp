@@ -22,8 +22,25 @@ int main(int argc, char *argv[]) {
 
     // Directories that we read
     const auto disparity_dir = input_dir / "disparity";
+    const auto depth_dir = input_dir / "depth";  // Possible alternative
     const auto details_dir = input_dir / "details";
     const auto left_rect_dir = input_dir / "left-rect";
+
+    // Check if `disparity` folder exists
+    if (!std::filesystem::exists(disparity_dir)) {
+        if (std::filesystem::exists(depth_dir)) {
+            std::cerr << "\n[WARNING] No 'disparity' folder found, but 'depth' exists."
+                      << "\nThis may indicate you are using an old Hammerhead version.\n"
+                      << "\nPlease refer to the following example to convert depth to disparity:\n"
+                      << "https://github.com/nodarhub/hammerhead_zmq/tree/main/examples/depth_to_disparity.\n"
+                      << std::endl;
+            return EXIT_FAILURE;
+        } else {
+            std::cerr << "[ERROR] Required 'disparity' folder is missing and no 'depth' folder was found."
+                      << "\nPlease verify the input path: " << input_dir << "\n" << std::endl;
+            return EXIT_FAILURE;
+        }
+    }
 
     // Topic names
     std::vector <Topic> topics{{

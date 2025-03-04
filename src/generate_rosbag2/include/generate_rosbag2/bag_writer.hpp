@@ -20,7 +20,7 @@ struct Topic {
 
 struct BagWriter {
     BagWriter(const std::string &output_dir, const std::vector<Topic> &topics) {
-        const rosbag2_cpp::StorageOptions storage_options({output_dir, "sqlite3"});
+        const rosbag2_storage::StorageOptions storage_options({output_dir, "sqlite3"});
         const rosbag2_cpp::ConverterOptions converter_options(
             {rmw_get_serialization_format(), rmw_get_serialization_format()});
         writer_ = std::make_unique<rosbag2_cpp::writers::SequentialWriter>();

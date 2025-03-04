@@ -7,18 +7,18 @@ This package converts the data recorded by hammerhead into a ROS2 bag. There are
     - The raw left and right camera images
     - The rectified left camera image
 
-To use this example, you need to record data with hammerhead (by setting `save_output=1` in the master config), and then
+To use this example, you need to record data with hammerhead, and then
 provide the output directory to this example as a command line parameter. Specifically, when recording, hammerhead will
 generate a folder of data of the form:
 
     20230208-133746/
-        depth/
-            000000.exr
-            000001.exr
+        disparity/
+            000000000.tiff
+            000000001.tiff
             ...
         details/
-            000000.csv
-            000001.csv
+            000000000.csv
+            000000001.csv
             ...
 
 To run the current example, you should ensure that this example is in a ROS2 workspace
@@ -43,13 +43,13 @@ This will generate a `bag` folder inside the specified directory:
                 bag/
                     bag_0.db3  
                     metadata.yaml
-                depth/
-                    000000.exr
-                    000001.exr
+                disparity/
+                    000000000.tiff
+                    000000001.tiff
                     ...
                 details/
-                    000000.csv
-                    000001.csv
+                    000000000.csv
+                    000000001.csv
                     ...
 
 Alternatively, if you want to save the bag in a different location, then you can provide that as the second argument to

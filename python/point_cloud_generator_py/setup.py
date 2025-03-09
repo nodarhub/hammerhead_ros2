@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='nodar',
     maintainer_email='support@nodarsensor.com',
-    description='This package converts the data recorded by hammerhead into a ROS2 bag.',
+    description='This example demonstrates how to subscribe to PointCloudSoup messages, generate downsampled PointCloud2 instances, and then publish the downsampled point clouds.',
     license='TODO',
     entry_points={
         'console_scripts': [

@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='nodar',
     maintainer_email='support@nodarsensor.com',
-    description='This package converts the data recorded by hammerhead into a ROS2 bag.',
+    description='This example is a simple OpenCV viewer for ROS2 images published by hammerhead.',
     license='TODO',
     entry_points={
         'console_scripts': [

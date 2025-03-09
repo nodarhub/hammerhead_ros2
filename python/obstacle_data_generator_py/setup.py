@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='nodar',
     maintainer_email='support@nodarsensor.com',
-    description='This package converts the data recorded by hammerhead into a ROS2 bag.',
+    description='This example demonstrates how to subscribe to ObstacleData messages, and save that data in .txt files.',
     license='TODO',
     entry_points={
         'console_scripts': [

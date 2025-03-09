@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='nodar',
     maintainer_email='support@nodarsensor.com',
-    description='This package converts the data recorded by hammerhead into a ROS2 bag.',
+    description='This example demonstrates how to stop/start the recording in realtime by using the ROS2 interface for hammerhead.',
     license='TODO',
     entry_points={
         'console_scripts': [

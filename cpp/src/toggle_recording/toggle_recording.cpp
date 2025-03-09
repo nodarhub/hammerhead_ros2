@@ -5,8 +5,6 @@
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/set_bool.hpp>
 
-static constexpr auto TOPIC = "nodar/should_record";
-
 void signalHandler(int signum) {
     std::cerr << "SIGINT or SIGTERM received." << std::endl;
     std::exit(EXIT_FAILURE);
@@ -62,6 +60,7 @@ private:
 int main(int argc, char **argv) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
+    static constexpr auto TOPIC = "nodar/should_record";
     std::cout << TOPIC << "\n\n--------------------\n"
               << "To stop or start recording, just enter 0 or 1, and press ENTER.\n"
               << "--------------------\n";

@@ -13,7 +13,13 @@ cd hammerhead_ros2
 colcon build
 ```
 
+After that, to run a specific example, like the `image_viewer`, you would 
+```shell
+source install/setup.bash
+ros2 run image_viewer image_viewer nodar/left/image_raw
+```
+
 The two convenience scripts `compile.sh` and `clean.sh` build and clean all the examples while making sure that all the
 build artifacts always remain in the same place.
 
-To run the examples, please refer to the individual README's. 
+For more details about the examples, please refer to the individual README's. 

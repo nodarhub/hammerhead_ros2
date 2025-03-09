@@ -3,7 +3,7 @@
 <package format="3">
     <name>generate_rosbag2</name>
     <version>0.0.0</version>
-    <description>TODO: Package description</description>
+    <description>This package converts the data recorded by hammerhead into a ROS2 bag.</description>
     <maintainer email="support@nodarsensor.com">nodar</maintainer>
     <license>TODO: License declaration</license>
 

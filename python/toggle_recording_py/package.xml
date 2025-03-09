@@ -1,16 +1,19 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-    <name>image_viewer</name>
+    <name>toggle_recording_py</name>
     <version>0.0.0</version>
-    <description>This example is a simple OpenCV viewer for ROS2 images published by hammerhead.</description>
+    <description>This example demonstrates how to stop/start the recording in realtime by using the ROS2 interface for
+        hammerhead.
+    </description>
     <maintainer email="support@nodarsensor.com">nodar</maintainer>
     <license>TODO: License declaration</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_python</buildtool_depend>
 
-    <depend>rclcpp</depend>
-    <depend>sensor_msgs</depend>
+    <depend>rclpy</depend>
+    <depend>std_srvs</depend>
 
     <export>
         <build_type>ament_cmake</build_type>

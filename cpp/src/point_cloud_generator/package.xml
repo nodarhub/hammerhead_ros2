@@ -3,7 +3,9 @@
 <package format="3">
     <name>point_cloud_generator</name>
     <version>0.0.0</version>
-    <description>TODO: Package description</description>
+    <description>This example demonstrates how to subscribe to PointCloudSoup messages, generate downsampled PointCloud2
+        instances, and then publish the downsampled point clouds.
+    </description>
     <maintainer email="support@nodarsensor.com">nodar</maintainer>
     <license>TODO: License declaration</license>
 
@@ -11,9 +13,6 @@
 
     <depend>hammerhead_msgs</depend>
     <depend>rclcpp</depend>
-
-    <test_depend>ament_lint_auto</test_depend>
-    <test_depend>ament_lint_common</test_depend>
 
     <export>
         <build_type>ament_cmake</build_type>

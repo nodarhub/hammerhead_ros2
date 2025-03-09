@@ -14,7 +14,4 @@ foreach (TOPIC exposure gain)
     install(TARGETS ${TOPIC} DESTINATION lib/${PROJECT_NAME})
 endforeach ()
 
-get_directory_property(hasParent PARENT_DIRECTORY)
-if (NOT hasParent)
-    ament_package()
-endif ()
+ament_package()

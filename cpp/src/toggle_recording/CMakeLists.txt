@@ -11,7 +11,4 @@ ament_target_dependencies(toggle_recording rclcpp std_srvs)
 set_target_properties(toggle_recording PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
 install(TARGETS toggle_recording DESTINATION lib/${PROJECT_NAME})
 
-get_directory_property(hasParent PARENT_DIRECTORY)
-if (NOT hasParent)
-    ament_package()
-endif ()
+ament_package()

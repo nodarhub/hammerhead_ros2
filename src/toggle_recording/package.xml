@@ -4,7 +4,7 @@
     <name>toggle_recording</name>
     <version>0.0.0</version>
     <description>TODO: Package description</description>
-    <maintainer email="mholzel@users.noreply.github.com">matt</maintainer>
+    <maintainer email="support@nodarsensor.com">nodar</maintainer>
     <license>TODO: License declaration</license>
 
     <buildtool_depend>ament_cmake</buildtool_depend>

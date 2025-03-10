@@ -22,10 +22,6 @@ public:
 
     PointCloudGeneratorNode() : Node("point_cloud_generator_node"), logger(get_logger()) {
         auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
-
-        // subscription = this->create_subscription<Msg>("nodar/point_cloud_soup", 1,
-        //                                               [=](const Msg::SharedPtr msg) { this->onNewMessage(msg); });
-        // point_cloud_publisher = this->create_publisher<PointCloud>("nodar/point_cloud", 10);
         subscription = this->create_subscription<Msg>("nodar/point_cloud_soup", qos,
                                                       [=](const Msg::SharedPtr msg) { this->onNewMessage(msg); });
         point_cloud_publisher = this->create_publisher<PointCloud>("nodar/point_cloud", qos);

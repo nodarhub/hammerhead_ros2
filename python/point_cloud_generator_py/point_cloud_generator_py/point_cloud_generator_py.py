@@ -35,6 +35,20 @@ class PointCloudGeneratorNode(Node):
         self.y_min = -50.0
         self.y_max = 50.0
 
+        self.point_cloud = PointCloud2()
+        self.point_cloud.header.frame_id = "map"
+        self.point_cloud.height = 1
+        fields = [
+            PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
+            PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
+            PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
+            PointField(name='rgb', offset=12, datatype=PointField.UINT32, count=1)
+        ]
+        self.point_cloud.fields = fields
+        self.point_cloud.is_bigendian = False
+        self.point_cloud.point_step = 16
+        self.point_cloud.is_dense = True
+
     def from_message(self, msg, img):
         if img.shape[0] != msg.height or img.shape[1] != msg.width:
             self.logger.info(
@@ -65,43 +79,36 @@ class PointCloudGeneratorNode(Node):
             disparity_scaled = disparity.astype(np.float32) / 16.0
             depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
 
-            total = disparity.size
             xyz = depth3d[self.border:-self.border, self.border:-self.border, :]
             bgr = rectified[self.border:-self.border, self.border:-self.border, :]
             valid = ~np.isinf(xyz).all(axis=2)
 
-            x = -xyz[:, :, 0]
             y = -xyz[:, :, 1]
             z = -xyz[:, :, 2]
             in_range = valid & (y >= self.y_min) & (y <= self.y_max) & (z >= self.z_min) & (z <= self.z_max)
             xyz = xyz[in_range]
             bgr = bgr[in_range]
 
-            downsample = 1
+            downsample = 10
             xyz = xyz[::downsample, :]
             bgr = bgr[::downsample, :]
 
-            point_cloud = PointCloud2()
-            point_cloud.header.frame_id = "map"
-            point_cloud.height = 1
-            point_cloud.width = xyz.shape[0]
-            fields = [
-                PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
-                PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
-                PointField(name='z', offset=8, datatype=PointField.FLOAT32, count=1),
-                PointField(name='rgb', offset=12, datatype=PointField.UINT32, count=1)
-            ]
-            point_cloud.fields = fields
-            point_cloud.is_bigendian = False
-            point_cloud.point_step = 16
-            point_cloud.row_step = point_cloud.point_step * point_cloud.width
-            point_cloud.is_dense = False
+            self.point_cloud.width = xyz.shape[0]
+            self.point_cloud.row_step = self.point_cloud.point_step * self.point_cloud.width
 
-            # Pre-allocate the data buffer. Note that there is only 1 row
-            point_cloud.data = bytearray(point_cloud.row_step)
+            # TODO: This line is the bottleneck for large matrices.
+            # I tried to optimistically oversize this in the constructor,
+            # (in which case the frombuffer call below needs the arg: count=point_cloud.width).
+            # That is very fast, but then the receiver complains about the size of the data
+            # not matching what is expected.
+            # I also tried something like creating a one time allocation self.data_buffer
+            # and then here doing point_cloud.data = memoryview(self.data_buffer)[:self.point_cloud.row_step]
+            # but that is just as slow.
+            # If we remedy this, then the downsample isn't as critical.
+            self.point_cloud.data = bytearray(self.point_cloud.row_step)
 
             # Combine xyz and rgb into a single array
-            points = np.frombuffer(point_cloud.data, dtype=[
+            points = np.frombuffer(self.point_cloud.data, dtype=[
                 ('x', np.float32),
                 ('y', np.float32),
                 ('z', np.float32),
@@ -113,11 +120,11 @@ class PointCloudGeneratorNode(Node):
             points['rgb'] = ((bgr[:, 2].astype(np.uint32) << 16) |
                              (bgr[:, 1].astype(np.uint32) << 8) |
                              (bgr[:, 0].astype(np.uint32)))
-
-            self.logger.info(f"{point_cloud.width} / {total} number of points used")
+            total = disparity.size
+            self.logger.info(f"{self.point_cloud.width} / {total} number of points used")
             self.logger.info(f"{np.sum(in_range)} / {total} in_range points")
             self.logger.info(f"{np.sum(valid)} / {total} valid points")
-            self.point_cloud_publisher.publish(point_cloud)
+            self.point_cloud_publisher.publish(self.point_cloud)
         else:
             self.logger.info("Point Cloud not subscribed")
 

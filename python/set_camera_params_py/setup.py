@@ -19,7 +19,8 @@ setup(
     license='TODO',
     entry_points={
         'console_scripts': [
-            f'{package_name} = {package_name}.{package_name}:main',
+            f'exposure = {package_name}.{package_name}:main_exposure',
+            f'gain = {package_name}.{package_name}:main_gain',
         ],
     },
 )

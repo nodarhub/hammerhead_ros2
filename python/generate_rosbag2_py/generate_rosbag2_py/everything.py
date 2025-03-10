@@ -10,6 +10,7 @@ from generate_rosbag2_py.bag_writer import BagWriter
 from generate_rosbag2_py.details import Details
 from generate_rosbag2_py.get_files import get_files
 from generate_rosbag2_py.safe_load import safe_load
+from generate_rosbag2_py.to_image_msg import to_image_msg
 from sensor_msgs.msg import PointCloud2
 from tqdm import tqdm
 
@@ -20,11 +21,6 @@ def to_point_cloud2_msg(details, disparity_image, left_rect):
     # Set the necessary fields and data for the PointCloud2 message
     # ...
     return point_cloud_msg
-
-
-def to_image_msg(image, timestamp):
-    bridge = CvBridge()
-    return bridge.cv2_to_imgmsg(image, encoding='bgr8')
 
 
 def main():
@@ -72,6 +68,7 @@ def main():
     disparities = get_files(disparity_dir, ".tiff")
     print(f"Found {len(disparities)} disparity maps to convert to point clouds")
 
+    bridge = CvBridge()
     for disparity in tqdm(disparities):
         disparity_image = safe_load(disparity, cv2.IMREAD_UNCHANGED, [np.uint16, ], 1)
         if disparity_image is not None:
@@ -99,12 +96,11 @@ def main():
                   f"This path does not exist:\n{details_filename}")
             continue
         details = Details(details_filename)
-        print(details)
-        bag_writer.write("nodar/point_cloud", to_point_cloud2_msg(details, disparity_image, left_rect))
-        bag_writer.write("nodar/left/image_raw", to_image_msg(left_raw, details.left_time))
-        bag_writer.write("nodar/right/image_raw", to_image_msg(right_raw, details.right_time))
-        bag_writer.write("nodar/left/image_rect", to_image_msg(left_rect, details.left_time))
-        bag_writer.write("nodar/disparity/image_raw", to_image_msg(disparity_image, details.left_time))
+        # bag_writer.write("nodar/point_cloud", to_point_cloud2_msg(details, disparity_image, left_rect))
+        bag_writer.write("nodar/left/image_raw", to_image_msg(bridge, left_raw, details.left_time))
+        bag_writer.write("nodar/right/image_raw", to_image_msg(bridge, right_raw, details.right_time))
+        bag_writer.write("nodar/left/image_rect", to_image_msg(bridge, left_rect, details.left_time))
+        bag_writer.write("nodar/disparity/image_raw", to_image_msg(bridge, disparity_image, details.left_time))
 
     rclpy.shutdown()
 

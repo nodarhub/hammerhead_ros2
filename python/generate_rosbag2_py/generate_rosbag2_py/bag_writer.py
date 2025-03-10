@@ -29,5 +29,4 @@ class BagWriter:
             self.writer.create_topic(topic_metadata)
 
     def write(self, topic_name, msg):
-        serialized_data = serialize_message(msg)
-        self.writer.write(topic_name, serialized_data, Clock().now().to_msg())
+        self.writer.write(topic_name, serialize_message(msg), Clock().now().nanoseconds)

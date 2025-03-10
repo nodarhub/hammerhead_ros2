@@ -38,19 +38,20 @@ int main(int argc, char *argv[]) {
             return EXIT_FAILURE;
         } else {
             std::cerr << "[ERROR] Required 'disparity' folder is missing and no 'depth' folder was found."
-                      << "\nPlease verify the input path: " << input_dir << "\n" << std::endl;
+                      << "\nPlease verify the input path: " << input_dir << "\n"
+                      << std::endl;
             return EXIT_FAILURE;
         }
     }
 
     // Topic names
-    std::vector <Topic> topics{{
-                                       {"nodar/point_cloud", "sensor_msgs/msg/PointCloud2"},
-                                       {"nodar/left/image_raw", "sensor_msgs/msg/Image"},
-                                       {"nodar/right/image_raw", "sensor_msgs/msg/Image"},
-                                       {"nodar/left/image_rect", "sensor_msgs/msg/Image"},
-                                       {"nodar/disparity/image_raw", "sensor_msgs/msg/Image"},
-                               }};
+    std::vector<Topic> topics{{
+        {"nodar/point_cloud", "sensor_msgs/msg/PointCloud2"},
+        {"nodar/left/image_raw", "sensor_msgs/msg/Image"},
+        {"nodar/right/image_raw", "sensor_msgs/msg/Image"},
+        {"nodar/left/image_rect", "sensor_msgs/msg/Image"},
+        {"nodar/disparity/image_raw", "sensor_msgs/msg/Image"},
+    }};
 
     // Remove old bag output if it exists
     if (std::filesystem::exists(output_dir)) {
@@ -74,7 +75,7 @@ int main(int argc, char *argv[]) {
     // Load the disparity data
     const auto disparities = getFiles(disparity_dir, ".tiff");
     std::cout << "Found " << disparities.size() << " disparity maps to convert to point clouds" << std::endl;
-    for (const auto &disparity: tq::tqdm(disparities)) {
+    for (const auto &disparity : tq::tqdm(disparities)) {
         // Safely load all the images.
         auto disparity_image = safeLoad(disparity, cv::IMREAD_ANYDEPTH, CV_16UC1, disparity, "disparity image");
         disparity_image.convertTo(disparity_image, CV_32FC1, 1.0 / 16.0);
@@ -83,8 +84,8 @@ int main(int argc, char *argv[]) {
         const auto left_rect_tiff = left_rect_dir / (disparity.stem().string() + ".tiff");
         const auto left_rect_png = left_rect_dir / (disparity.stem().string() + ".png");
         const auto left_rect_filename = std::filesystem::exists(left_rect_tiff) ? left_rect_tiff : left_rect_png;
-        const auto left_rect = safeLoad(left_rect_filename, cv::IMREAD_COLOR, CV_8UC3, disparity,
-                                        "left rectified image");
+        const auto left_rect =
+            safeLoad(left_rect_filename, cv::IMREAD_COLOR, CV_8UC3, disparity, "left rectified image");
         const auto topbot_tiff = topbot_dir / (disparity.stem().string() + ".tiff");
         const auto topbot_png = topbot_dir / (disparity.stem().string() + ".png");
         const auto topbot_filename = std::filesystem::exists(topbot_tiff) ? topbot_tiff : topbot_png;

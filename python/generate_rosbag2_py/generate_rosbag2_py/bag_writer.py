@@ -1,0 +1,35 @@
+import rclpy
+from rclpy.serialization import serialize_message
+from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions
+
+
+class BagWriter:
+    def __init__(self, output_dir, topics):
+        self.output_dir = output_dir
+        self.topics = topics
+
+        storage_options = StorageOptions(
+            uri=str(output_dir),
+            storage_id='sqlite3'
+        )
+        converter_options = ConverterOptions(
+            input_serialization_format='cdr',
+            output_serialization_format='cdr'
+        )
+
+        self.writer = SequentialWriter()
+        self.writer.open(storage_options, converter_options)
+
+        for topic in topics:
+            self.writer.create_topic({
+                'name': topic['name'],
+                'type': topic['type'],
+                'serialization_format': 'cdr',
+            })
+
+    def write(self, topic_name, msg):
+        serialized_data = serialize_message(msg)
+        self.writer.write(topic_name, serialized_data, rclpy.clock.Clock().now().to_msg())
+
+    def close(self):
+        self.writer.close()

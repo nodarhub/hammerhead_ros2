@@ -19,7 +19,8 @@ setup(
     license='TODO',
     entry_points={
         'console_scripts': [
-            f'{package_name} = {package_name}.{package_name}:main',
+            f'everything = {package_name}.everything:main',
+            f'xyz = {package_name}.xyz:main',
         ],
     },
 )

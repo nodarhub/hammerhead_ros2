@@ -70,8 +70,8 @@ def to_point_cloud_msg(details,
                      (bgr[:, 1].astype(np.uint32) << 8) |
                      (bgr[:, 0].astype(np.uint32)))
 
-    total = disparity.size
-    print(f"{point_cloud.width} / {total} number of points used")
-    print(f"{np.sum(in_range)} / {total} in_range points")
-    print(f"{np.sum(valid)} / {total} valid points")
+    # total = disparity.size
+    # print(f"{point_cloud.width} / {total} number of points used")
+    # print(f"{np.sum(in_range)} / {total} in_range points")
+    # print(f"{np.sum(valid)} / {total} valid points")
     return point_cloud

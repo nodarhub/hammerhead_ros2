@@ -19,6 +19,13 @@ source install/setup.bash
 ros2 run image_viewer image_viewer nodar/left/image_raw
 ```
 
+Note that we provide many examples both in C++ and in Python. The python examples have a `_py` postfix. 
+So, for example, the python equivalent example to the above is 
+```shell
+source install/setup.bash
+ros2 run image_viewer_py image_viewer_py nodar/left/image_raw
+```
+
 The two convenience scripts `compile.sh` and `clean.sh` build and clean all the examples while making sure that all the
 build artifacts always remain in the same place.
 

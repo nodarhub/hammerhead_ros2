@@ -75,6 +75,11 @@ class PointCloudGeneratorNode(Node):
             self.from_message(msg.rectified, rectified)
 
             self.disparity_to_depth4x4 = np.array(msg.disparity_to_depth4x4.data).reshape(4, 4)
+            print("Details:\n" +
+                  f"\tfocal_length : {msg.focal_length}\n" +
+                  f"\tbaseline     : {msg.baseline}\n" +
+                  f"disparity_to_depth4x4 : \n{self.disparity_to_depth4x4}\n"
+                  )
 
             disparity_scaled = disparity.astype(np.float32) / 16.0
             depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
@@ -83,8 +88,25 @@ class PointCloudGeneratorNode(Node):
             bgr = rectified[self.border:-self.border, self.border:-self.border, :]
             valid = ~np.isinf(xyz).all(axis=2)
 
+            x = -xyz[:, :, 0]
             y = -xyz[:, :, 1]
             z = -xyz[:, :, 2]
+
+            # Filter out inf values
+            x_filtered = x[~np.isinf(x)]
+            y_filtered = y[~np.isinf(y)]
+            z_filtered = z[~np.isinf(z)]
+
+            # Calculate min and max values for x, y, and z
+            min_x, max_x = np.min(x_filtered), np.max(x_filtered)
+            min_y, max_y = np.min(y_filtered), np.max(y_filtered)
+            min_z, max_z = np.min(z_filtered), np.max(z_filtered)
+
+            # Print the results
+            print(f"Min x: {min_x}, Max x: {max_x}")
+            print(f"Min y: {min_y}, Max y: {max_y}")
+            print(f"Min z: {min_z}, Max z: {max_z}")
+
             in_range = valid & (y >= self.y_min) & (y <= self.y_max) & (z >= self.z_min) & (z <= self.z_max)
             xyz = xyz[in_range]
             bgr = bgr[in_range]

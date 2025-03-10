@@ -16,10 +16,10 @@ class Details:
                 self.disparity_to_depth4x4[i // 4, i % 4] = float(tokens[4 + i])
 
     def __str__(self):
-        return ("Details:\n"
+        return ("Details:\n" +
                 f"\tleft_time    : {self.left_time}\n" +
                 f"\tright_time   : {self.right_time}\n" +
                 f"\tfocal_length : {self.focal_length}\n" +
-                f"\tbaseline     : {self.baseline}\n"
+                f"\tbaseline     : {self.baseline}\n" +
                 f"disparity_to_depth4x4 : \n{self.disparity_to_depth4x4}\n"
                 )

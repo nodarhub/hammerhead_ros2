@@ -18,13 +18,30 @@ def to_point_cloud_msg(details,
     bgr = rectified[border:-border, border:-border, :]
     valid = ~np.isinf(xyz).all(axis=2)
 
+    x = -xyz[:, :, 0]
     y = -xyz[:, :, 1]
     z = -xyz[:, :, 2]
+
+    # Filter out inf values
+    x_filtered = x[~np.isinf(x)]
+    y_filtered = y[~np.isinf(y)]
+    z_filtered = z[~np.isinf(z)]
+
+    # Calculate min and max values for x, y, and z
+    min_x, max_x = np.min(x_filtered), np.max(x_filtered)
+    min_y, max_y = np.min(y_filtered), np.max(y_filtered)
+    min_z, max_z = np.min(z_filtered), np.max(z_filtered)
+
+    # Print the results
+    print(f"Min x: {min_x}, Max x: {max_x}")
+    print(f"Min y: {min_y}, Max y: {max_y}")
+    print(f"Min z: {min_z}, Max z: {max_z}")
+
     in_range = valid & (y >= y_min) & (y <= y_max) & (z >= z_min) & (z <= z_max)
     xyz = xyz[in_range]
     bgr = bgr[in_range]
 
-    downsample = 2
+    downsample = 10
     xyz = xyz[::downsample, :]
     bgr = bgr[::downsample, :]
 

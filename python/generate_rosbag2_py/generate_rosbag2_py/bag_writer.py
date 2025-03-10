@@ -1,4 +1,4 @@
-import rclpy
+from rclpy.clock import Clock
 from rclpy.serialization import serialize_message
 from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
 
@@ -30,4 +30,4 @@ class BagWriter:
 
     def write(self, topic_name, msg):
         serialized_data = serialize_message(msg)
-        self.writer.write(topic_name, serialized_data, rclpy.clock.Clock().now().to_msg())
+        self.writer.write(topic_name, serialized_data, Clock().now().to_msg())

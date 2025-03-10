@@ -106,7 +106,6 @@ def main():
         bag_writer.write("nodar/left/image_rect", to_image_msg(left_rect, details.left_time))
         bag_writer.write("nodar/disparity/image_raw", to_image_msg(disparity_image, details.left_time))
 
-    bag_writer.close()
     rclpy.shutdown()
 
 

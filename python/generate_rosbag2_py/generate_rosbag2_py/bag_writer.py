@@ -1,6 +1,6 @@
 import rclpy
 from rclpy.serialization import serialize_message
-from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions
+from rosbag2_py import SequentialWriter, StorageOptions, ConverterOptions, TopicMetadata
 
 
 class BagWriter:
@@ -21,15 +21,13 @@ class BagWriter:
         self.writer.open(storage_options, converter_options)
 
         for topic in topics:
-            self.writer.create_topic({
-                'name': topic['name'],
-                'type': topic['type'],
-                'serialization_format': 'cdr',
-            })
+            topic_metadata = TopicMetadata(
+                name=topic['name'],
+                type=topic['type'],
+                serialization_format='cdr'
+            )
+            self.writer.create_topic(topic_metadata)
 
     def write(self, topic_name, msg):
         serialized_data = serialize_message(msg)
         self.writer.write(topic_name, serialized_data, rclpy.clock.Clock().now().to_msg())
-
-    def close(self):
-        self.writer.close()

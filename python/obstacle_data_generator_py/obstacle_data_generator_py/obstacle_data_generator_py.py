@@ -53,6 +53,7 @@ def main():
 
     exec = rclpy.executors.MultiThreadedExecutor()
 
+    # Note that we could use __file__ here, but then it would reference the install directory
     HERE = Path(".").parent.absolute()
     output_dir = HERE / "obstacle_data"
     output_dir.mkdir(parents=True, exist_ok=True)

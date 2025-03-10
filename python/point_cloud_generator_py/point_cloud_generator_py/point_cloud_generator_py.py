@@ -46,22 +46,14 @@ class PointCloudGeneratorNode(Node):
             else:
                 self.logger.error(f"Unknown image encoding `{msg.encoding}`")
                 return
-        img = np.frombuffer(msg.data, dtype=np.uint8 if msg.encoding == 'bgr8' else np.int16).reshape(img.shape)
-
-    def is_valid(self, xyz):
-        return not np.isinf(xyz).any()
-
-    def in_range(self, xyz):
-        x, y, z = -xyz[0], -xyz[1], -xyz[2]
-        return not (np.isinf(x) or np.isinf(y) or np.isinf(
-            z) or y < self.y_min or y > self.y_max or z < self.z_min or z > self.z_max)
+        img[:] = np.frombuffer(msg.data, dtype=np.uint8 if msg.encoding == 'bgr8' else np.int16).reshape(img.shape)
 
     def on_new_message(self, msg):
         self.logger.info("onNewMessage")
 
         num_point_cloud_subs = self.count_subscribers(self.point_cloud_publisher.topic_name)
 
-        if num_point_cloud_subs > 0:
+        if num_point_cloud_subs >= 0:
             disparity = np.zeros((msg.disparity.height, msg.disparity.width), dtype=np.uint16)
             rectified = np.zeros((msg.rectified.height, msg.rectified.width, 3), dtype=np.uint8)
 
@@ -70,10 +62,29 @@ class PointCloudGeneratorNode(Node):
 
             self.disparity_to_depth4x4 = np.array(msg.disparity_to_depth4x4.data).reshape(4, 4)
 
+            disparity_scaled = disparity.astype(np.float32) / 16.0
+            depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
+
+            total = disparity.size
+            xyz = depth3d[self.border:-self.border, self.border:-self.border, :]
+            bgr = rectified[self.border:-self.border, self.border:-self.border, :]
+            valid = ~np.isinf(xyz).all(axis=2)
+
+            x = -xyz[:, :, 0]
+            y = -xyz[:, :, 1]
+            z = -xyz[:, :, 2]
+            in_range = valid & (y >= self.y_min) & (y <= self.y_max) & (z >= self.z_min) & (z <= self.z_max)
+            xyz = xyz[in_range]
+            bgr = bgr[in_range]
+
+            downsample = 1
+            xyz = xyz[::downsample, :]
+            bgr = bgr[::downsample, :]
+
             point_cloud = PointCloud2()
             point_cloud.header.frame_id = "map"
-            point_cloud.height = msg.rectified.height
-            point_cloud.width = msg.rectified.width
+            point_cloud.height = 1
+            point_cloud.width = xyz.shape[0]
             fields = [
                 PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
                 PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
@@ -86,40 +97,26 @@ class PointCloudGeneratorNode(Node):
             point_cloud.row_step = point_cloud.point_step * point_cloud.width
             point_cloud.is_dense = False
 
-            disparity_scaled = disparity.astype(np.float32) / 16.0
-            depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
+            # Pre-allocate the data buffer. Note that there is only 1 row
+            point_cloud.data = bytearray(point_cloud.row_step)
 
-            xyz = depth3d.reshape(-1, 3)
-            bgr = rectified.reshape(-1, 3)
-            rows, cols = disparity.shape
-            min_row, max_row = self.border, rows - 1 - self.border
-            min_col, max_col = self.border, cols - 1 - self.border
-            total = rows * cols
-            in_range = 0
-            valid = 0
-            downsample = 1
-            num_points = 0
-            points = []
+            # Combine xyz and rgb into a single array
+            points = np.frombuffer(point_cloud.data, dtype=[
+                ('x', np.float32),
+                ('y', np.float32),
+                ('z', np.float32),
+                ('rgb', np.uint32)
+            ])
+            points['x'] = xyz[:, 0]
+            points['y'] = xyz[:, 1]
+            points['z'] = xyz[:, 2]
+            points['rgb'] = ((bgr[:, 2].astype(np.uint32) << 16) |
+                             (bgr[:, 1].astype(np.uint32) << 8) |
+                             (bgr[:, 0].astype(np.uint32)))
 
-            for row in range(rows):
-                for col in range(cols):
-                    idx = row * cols + col
-                    if min_row < row < max_row and min_col < col < max_col and self.is_valid(xyz[idx]):
-                        valid += 1
-                        if self.in_range(xyz[idx]):
-                            in_range += 1
-                            if (in_range % downsample) == 0:
-                                num_points += 1
-                                pt = [
-                                    -xyz[idx][0], xyz[idx][1], xyz[idx][2],
-                                    int(bgr[idx][0]), int(bgr[idx][1]), int(bgr[idx][2]), 0
-                                ]
-                                points.extend(pt)
-
-            point_cloud.data = np.array(points, dtype=np.float32).tobytes()
-            self.logger.info(f"{num_points} / {total} number of points used")
-            self.logger.info(f"{in_range} / {total} in_range points")
-            self.logger.info(f"{valid} / {total} valid points")
+            self.logger.info(f"{point_cloud.width} / {total} number of points used")
+            self.logger.info(f"{np.sum(in_range)} / {total} in_range points")
+            self.logger.info(f"{np.sum(valid)} / {total} valid points")
             self.point_cloud_publisher.publish(point_cloud)
         else:
             self.logger.info("Point Cloud not subscribed")

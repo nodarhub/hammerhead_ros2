@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 import cv2
+import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from generate_rosbag2_py.bag_writer import BagWriter
@@ -72,19 +73,19 @@ def main():
     print(f"Found {len(disparities)} disparity maps to convert to point clouds")
 
     for disparity in tqdm(disparities):
-        disparity_image = safe_load(disparity, cv2.IMREAD_ANYDEPTH, cv2.CV_16UC1, disparity, "disparity image")
+        disparity_image = safe_load(disparity, cv2.IMREAD_UNCHANGED, [np.uint16, ], 1)
         if disparity_image is not None:
             disparity_image = cv2.convertScaleAbs(disparity_image, alpha=1.0 / 16.0)
 
         left_rect_tiff = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
         left_rect_png = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".png")
         left_rect_filename = left_rect_tiff if os.path.exists(left_rect_tiff) else left_rect_png
-        left_rect = safe_load(left_rect_filename, cv2.IMREAD_COLOR, cv2.CV_8UC3, disparity, "left rectified image")
+        left_rect = safe_load(left_rect_filename, cv2.IMREAD_UNCHANGED, [np.uint8, np.uint16], 3)
 
         topbot_tiff = os.path.join(topbot_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
         topbot_png = os.path.join(topbot_dir, os.path.splitext(os.path.basename(disparity))[0] + ".png")
         topbot_filename = topbot_tiff if os.path.exists(topbot_tiff) else topbot_png
-        topbot = safe_load(topbot_filename, cv2.IMREAD_COLOR, cv2.CV_8UC3, disparity, "raw image")
+        topbot = safe_load(topbot_filename, cv2.IMREAD_UNCHANGED, [np.uint8, np.uint16], 3)
 
         if disparity_image is None or left_rect is None or topbot is None:
             continue
@@ -97,9 +98,8 @@ def main():
             print(f"Could not find the corresponding details for\n{disparity}. "
                   f"This path does not exist:\n{details_filename}")
             continue
-
         details = Details(details_filename)
-
+        print(details)
         bag_writer.write("nodar/point_cloud", to_point_cloud2_msg(details, disparity_image, left_rect))
         bag_writer.write("nodar/left/image_raw", to_image_msg(left_raw, details.left_time))
         bag_writer.write("nodar/right/image_raw", to_image_msg(right_raw, details.right_time))

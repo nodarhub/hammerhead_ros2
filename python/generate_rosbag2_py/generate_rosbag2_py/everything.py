@@ -63,8 +63,6 @@ def main():
     bridge = CvBridge()
     for disparity in tqdm(disparities):
         disparity_image = safe_load(disparity, cv2.IMREAD_UNCHANGED, [np.uint16, ], 1)
-        if disparity_image is not None:
-            disparity_image = cv2.convertScaleAbs(disparity_image, alpha=1.0 / 16.0)
 
         left_rect_tiff = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
         left_rect_png = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".png")

@@ -10,13 +10,13 @@ void signalHandler(int signum) {
 }
 
 int getCvType(const std::string &encoding, bool &type_error) {
-    if (encoding == "bayer_bggr8" || encoding == "mono8") {
+    if (encoding == "bayer_bggr8" or encoding == "bayer_rggb8" or encoding == "mono8") {
         return CV_8UC1;
     } else if (encoding == "bgr8") {
         return CV_8UC3;
     } else if (encoding == "bgra8") {
         return CV_8UC4;
-    } else if (encoding == "bayer_bggr16" || encoding == "mono16") {
+    } else if (encoding == "bayer_bggr16" or encoding == "bayer_rggb16" or encoding == "mono16") {
         return CV_16UC1;
     } else if (encoding == "bgr16") {
         return CV_16UC3;
@@ -68,6 +68,8 @@ private:
 
         // If the encoding is a Bayer pattern, convert to BGR
         if (msg->encoding == "bayer_bggr8" or msg->encoding == "bayer_bggr16") {
+            cv::cvtColor(image, image, cv::COLOR_BayerRG2BGR);
+        } else if (msg->encoding == "bayer_rggb8" or msg->encoding == "bayer_rggb16") {
             cv::cvtColor(image, image, cv::COLOR_BayerBG2BGR);
         }
 

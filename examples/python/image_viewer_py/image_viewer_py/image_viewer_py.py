@@ -38,6 +38,10 @@ class Ros2ImageViewer(Node):
             print(f"Cached image is the wrong size. Resizing to {msg.width}x{msg.height} with the type {msg.encoding}")
             if msg.encoding == 'bgr8':
                 self.image = np.zeros((msg.height, msg.width, 3), dtype=np.uint8)
+            elif msg.encoding == 'bgr16':
+                self.image = np.zeros((msg.height, msg.width, 3), dtype=np.uint16)
+            elif msg.encoding == 'mono8':
+                self.image = np.zeros((msg.height, msg.width), dtype=np.uint8)
             elif msg.encoding == 'mono16':
                 self.image = np.zeros((msg.height, msg.width), dtype=np.uint16)
             else:

@@ -17,13 +17,12 @@ The parameter `image_topic` should be a ROS2 topic name that
 provides `sensor_msgs::msg::Image` messages. For example, some image topics published by hammerhead are
 
     /nodar/color_blended_depth/image_raw
-    /nodar/disparity
     /nodar/left/image_raw
     /nodar/left/image_rect
     /nodar/right/image_raw
     /nodar/right/image_rect
 
-Hence to view the raw images of the left camera, you could run
+Hence, to view the raw images of the left camera, you could run
 
     ros2 run image_viewer_py image_viewer_py /nodar/left/image_raw
 

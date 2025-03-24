@@ -103,7 +103,7 @@ private:
             size_t total = 0;
             size_t in_range = 0;
             size_t valid = 0;
-            const auto downsample = 1;
+            const auto downsample = 10;
             size_t num_points = 0;
             try {
                 for (size_t row = 0; row < rows; ++row) {

@@ -24,8 +24,7 @@ bool fromMessage(const sensor_msgs::msg::Image& msg, cv::Mat& img) {
         cv_type = CV_16UC3;
     } else if (msg.encoding == "bgra16") {
         cv_type = CV_16UC4;
-    }
-    if (cv_type == -1) {
+    } else {
         std::cerr << "Unknown image encoding `" << msg.encoding << "`\n";
         return false;
     }

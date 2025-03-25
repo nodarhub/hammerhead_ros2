@@ -1,0 +1,5 @@
+empy==3.3.4
+lark>=1.2.2
+catkin-pkg>=1.0.0
+numpy<2
+tqdm>4.66

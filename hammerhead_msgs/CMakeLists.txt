@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(hammerhead_msgs LANGUAGES C CXX)
 
-cmake_policy(SET CMP0148 OLD)
+if (POLICY CMP0148)
+    cmake_policy(SET CMP0148 OLD)
+endif ()
 find_package(PythonInterp 3.6 REQUIRED)
 
 find_package(rclcpp REQUIRED)

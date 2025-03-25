@@ -9,28 +9,52 @@ void signalHandler(int signum) {
     std::exit(EXIT_FAILURE);
 }
 
-int getCvType(const std::string &encoding, bool &type_error) {
-    if (encoding == "bayer_bggr8" or encoding == "bayer_rggb8" or encoding == "mono8") {
-        return CV_8UC1;
-    } else if (encoding == "bgr8") {
-        return CV_8UC3;
-    } else if (encoding == "bgra8") {
-        return CV_8UC4;
-    } else if (encoding == "bayer_bggr16" or encoding == "bayer_rggb16" or encoding == "mono16") {
-        return CV_16UC1;
-    } else if (encoding == "bgr16") {
-        return CV_16UC3;
-    } else if (encoding == "bgra16") {
-        return CV_16UC4;
+bool fromMessage(const sensor_msgs::msg::Image& msg, cv::Mat& img) {
+    // Get the type
+    int cv_type = -1;
+    if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_rggb8" or msg.encoding == "mono8") {
+        cv_type = CV_8UC1;
+    } else if (msg.encoding == "bgr8") {
+        cv_type = CV_8UC3;
+    } else if (msg.encoding == "bgra8") {
+        cv_type = CV_8UC4;
+    } else if (msg.encoding == "bayer_bggr16" or msg.encoding == "bayer_rggb16" or msg.encoding == "mono16") {
+        cv_type = CV_16UC1;
+    } else if (msg.encoding == "bgr16") {
+        cv_type = CV_16UC3;
+    } else if (msg.encoding == "bgra16") {
+        cv_type = CV_16UC4;
     }
-    type_error = true;
-    return -1;
+    if (cv_type == -1) {
+        std::cerr << "Unknown image encoding `" << msg.encoding << "`\n";
+        return false;
+    }
+
+    // Allocate space for the output
+    if (img.rows != msg.height or img.cols != msg.width or cv_type != img.type()) {
+        std::cout << "Cached image is the wrong size or type. "  //
+                  << "Changing to " << msg.width << "x" << msg.height  //
+                  << " with the type " << msg.encoding << std::endl;
+        img = cv::Mat(msg.height, msg.width, cv_type);
+    }
+
+    // Copy in the message data
+    const auto size = msg.height * msg.step;
+    std::copy(msg.data.data(), msg.data.data() + size, img.data);
+
+    // If the encoding is a Bayer pattern, convert to BGR
+    if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16") {
+        cv::cvtColor(img, img, cv::COLOR_BayerRG2BGR);
+    } else if (msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16") {
+        cv::cvtColor(img, img, cv::COLOR_BayerBG2BGR);
+    }
+    return true;
 }
 
 class Ros2ImageViewer : public rclcpp::Node {
 public:
     using Msg = sensor_msgs::msg::Image;
-    Ros2ImageViewer(const std::string &topic)
+    Ros2ImageViewer(const std::string& topic)
         : Node("ros2_image_viewer"), topic(topic), stop_command(stop_promise.get_future()) {
         auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
 
@@ -48,29 +72,9 @@ private:
             stop_promise.set_value();
             return;
         }
-        // Determine the CV type from the encoding
-        bool type_error = false;
-        const auto cv_type = getCvType(msg->encoding, type_error);
-        if (type_error) {
-            std::cerr << "Unknown image encoding `" << msg->encoding << "`\n";
+        if (not msg or not fromMessage(*msg, image)) {
             stop_promise.set_value();
             return;
-        }
-        if (image.rows != msg->height or image.cols != msg->width or cv_type != image.type()) {
-            std::cout << "Cached image is the wrong size or type. "  //
-                      << "Resizing to " << msg->width << "x" << msg->height  //
-                      << " with the type " << msg->encoding << std::endl;
-            image = cv::Mat(msg->height, msg->width, cv_type);
-        }
-        // Copy the data into the cv::Mat
-        const auto size = msg->height * msg->step;
-        std::copy(msg->data.data(), msg->data.data() + size, image.data);
-
-        // If the encoding is a Bayer pattern, convert to BGR
-        if (msg->encoding == "bayer_bggr8" or msg->encoding == "bayer_bggr16") {
-            cv::cvtColor(image, image, cv::COLOR_BayerRG2BGR);
-        } else if (msg->encoding == "bayer_rggb8" or msg->encoding == "bayer_rggb16") {
-            cv::cvtColor(image, image, cv::COLOR_BayerBG2BGR);
         }
 
         // Downsize the image before viewing
@@ -90,7 +94,7 @@ public:
     std::shared_future<void> stop_command;
 };
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
     if (argc == 1) {

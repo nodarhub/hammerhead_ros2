@@ -1,5 +1,6 @@
 #include <iostream>
 #include <opencv2/calib3d.hpp>
+#include <opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/utilities.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -13,9 +14,50 @@ void signalHandler(int signum) {
     std::exit(EXIT_FAILURE);
 }
 
+bool fromMessage(const sensor_msgs::msg::Image& msg, cv::Mat& img) {
+    // Get the type
+    int cv_type = -1;
+    if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_rggb8" or msg.encoding == "mono8") {
+        cv_type = CV_8UC1;
+    } else if (msg.encoding == "bgr8") {
+        cv_type = CV_8UC3;
+    } else if (msg.encoding == "bgra8") {
+        cv_type = CV_8UC4;
+    } else if (msg.encoding == "bayer_bggr16" or msg.encoding == "bayer_rggb16" or msg.encoding == "mono16") {
+        cv_type = CV_16UC1;
+    } else if (msg.encoding == "bgr16") {
+        cv_type = CV_16UC3;
+    } else if (msg.encoding == "bgra16") {
+        cv_type = CV_16UC4;
+    }
+    if (cv_type == -1) {
+        std::cerr << "Unknown image encoding `" << msg.encoding << "`\n";
+        return false;
+    }
+
+    // Allocate space for the output
+    if (img.rows != msg.height or img.cols != msg.width or cv_type != img.type()) {
+        std::cout << "Cached image is the wrong size or type. "  //
+                  << "Changing to " << msg.width << "x" << msg.height  //
+                  << " with the type " << msg.encoding << std::endl;
+        img = cv::Mat(msg.height, msg.width, cv_type);
+    }
+
+    // Copy in the message data
+    const auto size = msg.height * msg.step;
+    std::copy(msg.data.data(), msg.data.data() + size, img.data);
+
+    // If the encoding is a Bayer pattern, convert to BGR
+    if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16") {
+        cv::cvtColor(img, img, cv::COLOR_BayerRG2BGR);
+    } else if (msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16") {
+        cv::cvtColor(img, img, cv::COLOR_BayerBG2BGR);
+    }
+    return true;
+}
+
 class PointCloudGeneratorNode : public rclcpp::Node {
 public:
-    using Image = sensor_msgs::msg::Image;
     using Msg = hammerhead_msgs::msg::PointCloudSoup;
     using PointCloud = sensor_msgs::msg::PointCloud2;
     rclcpp::Logger logger;
@@ -29,23 +71,6 @@ public:
     }
 
 private:
-    void fromMessage(const Image& msg, cv::Mat& img) {
-        if (img.rows != msg.height or img.cols != msg.width) {
-            std::cout << "Cached image is the wrong size. Resizing to " << msg.width << "x" << msg.height
-                      << " with the type " << msg.encoding << std::endl;
-            if (msg.encoding == "bgr8") {
-                img = cv::Mat(msg.height, msg.width, CV_8UC3);
-            } else if (msg.encoding == "mono16") {
-                img = cv::Mat(msg.height, msg.width, CV_16SC1);
-            } else {
-                std::cerr << "Unknown image encoding `" << msg.encoding << "`\n";
-                return;
-            }
-        }
-        const auto size = msg.height * msg.step;
-        std::copy(msg.data.data(), msg.data.data() + size, img.data);
-    }
-
     bool isValid(const float* const xyz) {
         return not std::isinf(xyz[0]) and not std::isinf(xyz[1]) and not std::isinf(xyz[2]);
     }
@@ -67,8 +92,10 @@ private:
 
         if (num_point_cloud_subs > 0) {
             // Retrieve OpenCV matrices from the message
-            fromMessage(msg->disparity, disparity);
-            fromMessage(msg->rectified, rectified);
+            if (not fromMessage(msg->disparity, disparity) or  //
+                not fromMessage(msg->rectified, rectified)) {
+                return;
+            }
 
             const auto& data = msg->disparity_to_depth4x4.data();
             std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());

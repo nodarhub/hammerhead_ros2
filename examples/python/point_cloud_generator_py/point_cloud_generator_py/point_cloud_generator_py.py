@@ -1,11 +1,10 @@
 import cv2
 import numpy as np
 import rclpy
+from hammerhead_msgs.msg import PointCloudSoup
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import PointCloud2, PointField
-
-from hammerhead_msgs.msg import PointCloudSoup
 
 
 class PointCloudGeneratorNode(Node):
@@ -48,19 +47,51 @@ class PointCloudGeneratorNode(Node):
         self.point_cloud.is_bigendian = False
         self.point_cloud.point_step = 16
         self.point_cloud.is_dense = True
+        self.img = np.zeros((1, 1), dtype=np.uint8)
+        self.disparity = np.zeros((1, 1), dtype=np.uint8)
+        self.rectified = np.zeros((1, 1), dtype=np.uint8)
 
-    def from_message(self, msg, img):
-        if img.shape[0] != msg.height or img.shape[1] != msg.width:
-            self.logger.info(
-                f"Cached image is the wrong size. Resizing to {msg.width}x{msg.height} with the type {msg.encoding}")
-            if msg.encoding == 'bgr8':
-                img = np.zeros((msg.height, msg.width, 3), dtype=np.uint8)
-            elif msg.encoding == 'mono16':
-                img = np.zeros((msg.height, msg.width), dtype=np.int16)
+    def from_message(self, msg):
+        # Get the type
+        if msg.encoding == 'bayer_bggr8' or msg.encoding == 'bayer_rggb8' or msg.encoding == 'mono8':
+            channels, dtype = 1, np.uint8
+        elif msg.encoding == 'bgr8':
+            channels, dtype = 3, np.uint8
+        elif msg.encoding == 'bgra8':
+            channels, dtype = 4, np.uint8
+        elif msg.encoding == 'bayer_bggr16' or msg.encoding == 'bayer_rggb16' or msg.encoding == 'mono16':
+            channels, dtype = 1, np.uint16
+        elif msg.encoding == 'bgr16':
+            channels, dtype = 3, np.uint16
+        elif msg.encoding == 'bgra16':
+            channels, dtype = 4, np.uint16
+        else:
+            print(f"Unknown image encoding `{msg.encoding}`")
+            return False
+
+        # Allocate space for the output
+        chnls = self.img.shape[2] if self.img is not None and self.img.ndim == 3 else 1
+        if (self.img is None
+                or self.img.shape[0] != msg.height or self.img.shape[1] != msg.width
+                or chnls != channels or self.img.dtype != dtype):
+            print(
+                f"Cached image is the wrong size. Changing to {msg.width}x{msg.height} with the type {msg.encoding}, that is, channels = {chnls}, dtype = {dtype}")
+            if channels != 1:
+                self.img = np.zeros((msg.height, msg.width, channels), dtype=dtype)
             else:
-                self.logger.error(f"Unknown image encoding `{msg.encoding}`")
-                return
-        img[:] = np.frombuffer(msg.data, dtype=np.uint8 if msg.encoding == 'bgr8' else np.int16).reshape(img.shape)
+                self.img = np.zeros((msg.height, msg.width), dtype=dtype)
+
+        # Copy in the message data
+        self.img.data = msg.data
+
+        # If the encoding is a Bayer pattern, convert to BGR
+        if msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16":
+            print("Converting Bayer to BGR")
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_BayerRG2BGR)
+        elif msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16":
+            print("Converting Bayer to BGR")
+            self.img = cv2.cvtColor(self.img, cv2.COLOR_BayerBG2BGR)
+        return True
 
     def on_new_message(self, msg):
         self.logger.info("onNewMessage")
@@ -68,24 +99,30 @@ class PointCloudGeneratorNode(Node):
         num_point_cloud_subs = self.count_subscribers(self.point_cloud_publisher.topic_name)
 
         if num_point_cloud_subs >= 0:
-            disparity = np.zeros((msg.disparity.height, msg.disparity.width), dtype=np.uint16)
             rectified = np.zeros((msg.rectified.height, msg.rectified.width, 3), dtype=np.uint8)
 
-            self.from_message(msg.disparity, disparity)
-            self.from_message(msg.rectified, rectified)
+            self.img = self.disparity
+            if not self.from_message(msg.disparity):
+                self.stop_command = True
+                return
+            self.disparity = self.img
+            self.img = self.rectified
+            if not self.from_message(msg.rectified):
+                self.stop_command = True
+                return
+            self.rectified = self.img
 
             self.disparity_to_depth4x4 = np.array(msg.disparity_to_depth4x4.data).reshape(4, 4)
             print("Details:\n" +
                   f"\tfocal_length : {msg.focal_length}\n" +
-                  f"\tbaseline     : {msg.baseline}\n" +
-                  f"disparity_to_depth4x4 : \n{self.disparity_to_depth4x4}\n"
+                  f"\tbaseline     : {msg.baseline}\n"
                   )
 
-            disparity_scaled = disparity.astype(np.float32) / 16.0
+            disparity_scaled = self.disparity.astype(np.float32) / 16.0
             depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
 
             xyz = depth3d[self.border:-self.border, self.border:-self.border, :]
-            bgr = rectified[self.border:-self.border, self.border:-self.border, :]
+            bgr = self.rectified[self.border:-self.border, self.border:-self.border, :]
             valid = ~np.isinf(xyz).all(axis=2)
 
             x = -xyz[:, :, 0]
@@ -142,7 +179,7 @@ class PointCloudGeneratorNode(Node):
             points['rgb'] = ((bgr[:, 2].astype(np.uint32) << 16) |
                              (bgr[:, 1].astype(np.uint32) << 8) |
                              (bgr[:, 0].astype(np.uint32)))
-            total = disparity.size
+            total = self.disparity.size
             self.logger.info(f"{self.point_cloud.width} / {total} number of points used")
             self.logger.info(f"{np.sum(in_range)} / {total} in_range points")
             self.logger.info(f"{np.sum(valid)} / {total} valid points")

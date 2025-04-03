@@ -4,8 +4,8 @@
     <name>generate_rosbag2_py</name>
     <version>0.0.0</version>
     <description>This package converts the data recorded by hammerhead into a ROS2 bag.</description>
-    <maintainer email="support@nodarsensor.com">nodar</maintainer>
-    <license>TODO: License declaration</license>
+    <maintainer email="support@nodarsensor.com">Nodar</maintainer>
+    <license>NODAR Limited Copyright License</license>
 
     <buildtool_depend>ament_python</buildtool_depend>
 

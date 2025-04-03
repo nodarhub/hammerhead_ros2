@@ -4,8 +4,8 @@
     <name>image_viewer_py</name>
     <version>0.0.0</version>
     <description>This example is a simple OpenCV viewer for ROS2 images published by hammerhead.</description>
-    <maintainer email="support@nodarsensor.com">nodar</maintainer>
-    <license>TODO: License declaration</license>
+    <maintainer email="support@nodarsensor.com">Nodar</maintainer>
+    <license>NODAR Limited Copyright License</license>
 
     <buildtool_depend>ament_python</buildtool_depend>
 

@@ -6,8 +6,8 @@
     <description>This example demonstrates how to subscribe to ObstacleData messages, and save that data in .txt
         files.
     </description>
-    <maintainer email="support@nodarsensor.com">nodar</maintainer>
-    <license>TODO: License declaration</license>
+    <maintainer email="support@nodarsensor.com">Nodar</maintainer>
+    <license>NODAR Limited Copyright License</license>
 
     <buildtool_depend>ament_python</buildtool_depend>
 

@@ -16,7 +16,11 @@ setup(
     maintainer='nodar',
     maintainer_email='support@nodarsensor.com',
     description='This package converts the data recorded by hammerhead into a ROS2 bag.',
-    license='TODO',
+    license='NODAR Limited Copyright License',
+    license_files=['LICENSE'],
+    project_urls={
+    'License': 'https://github.com/nodarhub/hammerhead_ros2/blob/main/LICENSE',
+    },
     entry_points={
         'console_scripts': [
             f'everything = {package_name}.everything:main',

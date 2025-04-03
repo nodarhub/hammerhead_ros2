@@ -16,7 +16,11 @@ setup(
     maintainer='nodar',
     maintainer_email='support@nodarsensor.com',
     description='This example demonstrates how to subscribe to ObstacleData messages, and save that data in .txt files.',
-    license='TODO',
+    license='NODAR Limited Copyright License',
+    license_files=['LICENSE'],
+    project_urls={
+    'License': 'https://github.com/nodarhub/hammerhead_ros2/blob/main/LICENSE',
+    },
     entry_points={
         'console_scripts': [
             f'{package_name} = {package_name}.{package_name}:main',

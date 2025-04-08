@@ -1,3 +1,5 @@
+import time
+
 import cv2
 import numpy as np
 import rclpy
@@ -50,6 +52,8 @@ class PointCloudGeneratorNode(Node):
         self.img = np.zeros((1, 1), dtype=np.uint8)
         self.disparity = np.zeros((1, 1), dtype=np.uint8)
         self.rectified = np.zeros((1, 1), dtype=np.uint8)
+        self.depth3d = None
+        self.index = 0
 
     def from_message(self, msg):
         # Get the type
@@ -66,83 +70,60 @@ class PointCloudGeneratorNode(Node):
         elif msg.encoding == 'bgra16':
             channels, dtype = 4, np.uint16
         else:
-            print(f"Unknown image encoding `{msg.encoding}`")
-            return False
+            self.logger.error(f"Unknown image encoding `{msg.encoding}`")
+            return None
 
-        # Allocate space for the output
-        chnls = self.img.shape[2] if self.img is not None and self.img.ndim == 3 else 1
-        if (self.img is None
-                or self.img.shape[0] != msg.height or self.img.shape[1] != msg.width
-                or chnls != channels or self.img.dtype != dtype):
-            print(
-                f"Cached image is the wrong size. Changing to {msg.width}x{msg.height} with the type {msg.encoding}, that is, channels = {chnls}, dtype = {dtype}")
-            if channels != 1:
-                self.img = np.zeros((msg.height, msg.width, channels), dtype=dtype)
-            else:
-                self.img = np.zeros((msg.height, msg.width), dtype=dtype)
-
-        # Copy in the message data
-        self.img.data = msg.data
+        img = np.frombuffer(msg.data, dtype=dtype)
+        if channels != 1:
+            img = img.reshape(msg.height, msg.width, channels)
+        else:
+            img = img.reshape(msg.height, msg.width)
 
         # If the encoding is a Bayer pattern, convert to BGR
         if msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16":
-            print("Converting Bayer to BGR")
-            self.img = cv2.cvtColor(self.img, cv2.COLOR_BayerRG2BGR)
+            self.logger.info("Converting Bayer to BGR")
+            img = cv2.cvtColor(img, cv2.COLOR_BayerRG2BGR)
         elif msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16":
-            print("Converting Bayer to BGR")
-            self.img = cv2.cvtColor(self.img, cv2.COLOR_BayerBG2BGR)
-        return True
+            self.logger.info("Converting Bayer to BGR")
+            img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
+        return img
 
     def on_new_message(self, msg):
+        self.index += 1
+
         self.logger.info("onNewMessage")
 
         num_point_cloud_subs = self.count_subscribers(self.point_cloud_publisher.topic_name)
 
         if num_point_cloud_subs >= 0:
-            rectified = np.zeros((msg.rectified.height, msg.rectified.width, 3), dtype=np.uint8)
-
-            self.img = self.disparity
-            if not self.from_message(msg.disparity):
-                self.stop_command = True
+            self.logger.info("msg.disparity.encoding {msg.disparity.encoding}")
+            self.logger.info("msg.rectified.encoding {msg.rectified.encoding}")
+            self.disparity = self.from_message(msg.disparity)
+            if self.disparity is None:
                 return
-            self.disparity = self.img
-            self.img = self.rectified
-            if not self.from_message(msg.rectified):
-                self.stop_command = True
+            self.rectified = self.from_message(msg.rectified)
+            if self.rectified is None:
                 return
-            self.rectified = self.img
 
             self.disparity_to_depth4x4 = np.array(msg.disparity_to_depth4x4.data).reshape(4, 4)
-            print("Details:\n" +
-                  f"\tfocal_length : {msg.focal_length}\n" +
-                  f"\tbaseline     : {msg.baseline}\n"
-                  )
+            self.logger.info("Details:\n" +
+                             f"\tfocal_length : {msg.focal_length}\n" +
+                             f"\tbaseline     : {msg.baseline}\n"
+                             )
 
-            disparity_scaled = self.disparity.astype(np.float32) / 16.0
-            depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
+            disparity_scaled = self.disparity / np.float32(16)
+            if self.depth3d is None:
+                self.depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
+            else:
+                cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4, self.depth3d)
 
-            xyz = depth3d[self.border:-self.border, self.border:-self.border, :]
+            xyz = self.depth3d[self.border:-self.border, self.border:-self.border, :]
             bgr = self.rectified[self.border:-self.border, self.border:-self.border, :]
-            valid = ~np.isinf(xyz).all(axis=2)
 
             x = -xyz[:, :, 0]
             y = -xyz[:, :, 1]
             z = -xyz[:, :, 2]
-
-            # Filter out inf values
-            x_filtered = x[~np.isinf(x)]
-            y_filtered = y[~np.isinf(y)]
-            z_filtered = z[~np.isinf(z)]
-
-            # Calculate min and max values for x, y, and z
-            min_x, max_x = np.min(x_filtered), np.max(x_filtered)
-            min_y, max_y = np.min(y_filtered), np.max(y_filtered)
-            min_z, max_z = np.min(z_filtered), np.max(z_filtered)
-
-            # Print the results
-            print(f"Min x: {min_x}, Max x: {max_x}")
-            print(f"Min y: {min_y}, Max y: {max_y}")
-            print(f"Min z: {min_z}, Max z: {max_z}")
+            valid = ~(np.isinf(x) | np.isinf(y) | np.isinf(z))
 
             in_range = valid & (y >= self.y_min) & (y <= self.y_max) & (z >= self.z_min) & (z <= self.z_max)
             xyz = xyz[in_range]
@@ -195,7 +176,9 @@ def main(args=None):
     point_cloud_generator_node = PointCloudGeneratorNode()
     exec.add_node(point_cloud_generator_node)
 
-    exec.spin()
+    while point_cloud_generator_node.index < 5:
+        exec.spin_once()
+        time.sleep(.1)
 
     rclpy.shutdown()
 

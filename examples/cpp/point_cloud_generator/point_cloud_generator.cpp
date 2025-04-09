@@ -109,7 +109,13 @@ private:
         disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
         cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_depth4x4);
 
+        // Assert types before continuing
+        assert(depth3d.type() == CV_32FC3);
+        const auto rect_type = rectified.type();
+        assert(rect_type == CV_8UC3 or rect_type == CV_8SC3 or rect_type == CV_16UC3 or rect_type == CV_16SC3);
+
         auto xyz = reinterpret_cast<float*>(depth3d.data);
+        const auto bgr_step = rect_type == CV_8UC3 or rect_type == CV_8SC3 ? 3 : 6;
         auto bgr = rectified.data;
         const auto rows = disparity.rows;
         const auto cols = disparity.cols;
@@ -119,7 +125,7 @@ private:
         size_t num_points = 0;
         try {
             for (size_t row = 0; row < rows; ++row) {
-                for (size_t col = 0; col < cols; ++col, xyz += 3, bgr += 3) {
+                for (size_t col = 0; col < cols; ++col, xyz += 3, bgr += bgr_step) {
                     ++total;
                     if (not isValid(xyz)) {
                         continue;
@@ -129,8 +135,17 @@ private:
                         continue;
                     }
                     ++num_points;
-                    *x = -xyz[0], *y = xyz[1], *z = xyz[2];
-                    *b = bgr[0], *g = bgr[1], *r = bgr[2];
+                    *x = -xyz[0], *y = -xyz[1], *z = -xyz[2];
+                    if (rect_type == CV_8UC3 or rect_type == CV_8SC3) {
+                        *b = bgr[0];
+                        *g = bgr[1];
+                        *r = bgr[2];
+                    } else if (rect_type == CV_16UC3 or rect_type == CV_16SC3) {
+                        const auto* bgr16 = reinterpret_cast<const uint16_t*>(bgr);
+                        *b = static_cast<uint8_t>(bgr16[0] / 257);
+                        *g = static_cast<uint8_t>(bgr16[1] / 257);
+                        *r = static_cast<uint8_t>(bgr16[2] / 257);
+                    }
                     ++x, ++y, ++z, ++r, ++g, ++b;
                 }
             }

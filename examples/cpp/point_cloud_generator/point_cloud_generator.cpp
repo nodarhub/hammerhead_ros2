@@ -129,7 +129,7 @@ private:
                         continue;
                     }
                     ++num_points;
-                    *x = -xyz[0], *y = xyz[1], *z = xyz[2];
+                    *x = xyz[0], *y = xyz[1], *z = xyz[2];
                     *b = bgr[0], *g = bgr[1], *r = bgr[2];
                     ++x, ++y, ++z, ++r, ++g, ++b;
                 }

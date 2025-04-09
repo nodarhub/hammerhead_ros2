@@ -6,10 +6,10 @@ from sensor_msgs.msg import PointCloud2, PointField
 def to_point_cloud_msg(details,
                        disparity,
                        rectified):
-    disparity_scaled = disparity / np.float32(16)
+    disparity_scaled = disparity.astype(np.float32) / 16.0
     depth3d = cv2.reprojectImageTo3D(disparity_scaled, details.disparity_to_depth4x4)
 
-    xyz = depth3d
+    xyz = -depth3d
     bgr = rectified
 
     x = xyz[:, :, 0]

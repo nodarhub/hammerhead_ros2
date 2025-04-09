@@ -108,7 +108,7 @@ class PointCloudGeneratorNode(Node):
         else:
             cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4, self.depth3d)
 
-        xyz = self.depth3d
+        xyz = -self.depth3d
         bgr = self.rectified
 
         x = xyz[:, :, 0]

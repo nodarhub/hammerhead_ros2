@@ -110,7 +110,11 @@ class PointCloudGeneratorNode(Node):
 
         xyz = -self.depth3d
         bgr = self.rectified
-
+        if bgr.dtype == np.uint16 or bgr.dtype == np.int16:
+            bgr = (bgr / 257).astype(np.uint8)
+        if bgr.dtype != np.uint8 or bgr.dtype != np.int8:
+            self.logger.error("Rectified image should be uint8 or int8")
+            return
         x = xyz[:, :, 0]
         y = xyz[:, :, 1]
         z = xyz[:, :, 2]
@@ -162,11 +166,7 @@ def main(args=None):
     exec = rclpy.executors.MultiThreadedExecutor()
     point_cloud_generator_node = PointCloudGeneratorNode()
     exec.add_node(point_cloud_generator_node)
-
-    while point_cloud_generator_node.index < 5:
-        exec.spin_once()
-        time.sleep(.1)
-
+    exec.spin()
     rclpy.shutdown()
 
 

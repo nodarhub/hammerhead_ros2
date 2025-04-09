@@ -74,15 +74,6 @@ private:
         return not std::isinf(xyz[0]) and not std::isinf(xyz[1]) and not std::isinf(xyz[2]);
     }
 
-    bool inRange(const float* const xyz) {
-        const auto x = -xyz[0];
-        const auto y = -xyz[1];
-        const auto z = -xyz[2];
-        return not(std::isinf(x)  //
-                   or std::isinf(y) or y < y_min or y > y_max  //
-                   or std::isinf(z) or z < z_min or z > z_max);
-    }
-
     void onNewMessage(const Msg::SharedPtr msg) {
         RCLCPP_INFO(logger, "onNewMessage");
         if (count_subscribers(point_cloud_publisher->get_topic_name()) == 0) {
@@ -122,31 +113,25 @@ private:
         auto bgr = rectified.data;
         const auto rows = disparity.rows;
         const auto cols = disparity.cols;
-        const auto min_row = border;
-        const auto max_row = rows - 1 - border;
-        const auto min_col = border;
-        const auto max_col = cols - 1 - border;
         size_t total = 0;
-        size_t in_range = 0;
         size_t valid = 0;
         const auto downsample = 10;
         size_t num_points = 0;
         try {
             for (size_t row = 0; row < rows; ++row) {
                 for (size_t col = 0; col < cols; ++col, xyz += 3, bgr += 3) {
-                    if (row > min_row and row < max_row and col > min_col and col < max_col and isValid(xyz)) {
-                        ++valid;
-                        if (inRange(xyz)) {
-                            ++in_range;
-                            if ((in_range % downsample) == 0) {
-                                ++num_points;
-                                *x = -xyz[0], *y = xyz[1], *z = xyz[2];
-                                *b = bgr[0], *g = bgr[1], *r = bgr[2];
-                                ++x, ++y, ++z, ++r, ++g, ++b;
-                            }
-                        }
-                    }
                     ++total;
+                    if (not isValid(xyz)) {
+                        continue;
+                    }
+                    ++valid;
+                    if (valid % downsample) {
+                        continue;
+                    }
+                    ++num_points;
+                    *x = -xyz[0], *y = xyz[1], *z = xyz[2];
+                    *b = bgr[0], *g = bgr[1], *r = bgr[2];
+                    ++x, ++y, ++z, ++r, ++g, ++b;
                 }
             }
         } catch (...) {
@@ -155,7 +140,6 @@ private:
         modifier.resize(num_points);
         if (true) {
             std::cout << num_points << " / " << total << " number of points used" << std::endl;
-            std::cout << in_range << " / " << total << " in_range points" << std::endl;
             std::cout << valid << " / " << total << " valid points" << std::endl;
         }
         point_cloud_publisher->publish(point_cloud);
@@ -165,26 +149,16 @@ private:
     rclcpp::Subscription<Msg>::SharedPtr subscription;
     rclcpp::Publisher<PointCloud>::SharedPtr point_cloud_publisher;
     cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4;
-    size_t border = 8;
-    float z_min = 8.0;
-    float z_max = 500.0;
-    float y_min = -50.0;
-    float y_max = 50.0;
 };
 
 int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
     rclcpp::init(argc, argv);
-
     rclcpp::executors::MultiThreadedExecutor exec;
-
     auto point_cloud_generator_node = std::make_shared<PointCloudGeneratorNode>();
     exec.add_node(point_cloud_generator_node);
-
     exec.spin();
-
     rclcpp::shutdown();
-
     return 0;
 }

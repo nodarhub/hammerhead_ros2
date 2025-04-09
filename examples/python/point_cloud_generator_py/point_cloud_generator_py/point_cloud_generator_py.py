@@ -30,12 +30,6 @@ class PointCloudGeneratorNode(Node):
             qos_profile
         )
         self.disparity_to_depth4x4 = np.eye(4, dtype=np.float32)
-        self.border = 8
-        self.z_min = 8.0
-        self.z_max = 500.0
-        self.y_min = -50.0
-        self.y_max = 50.0
-
         self.point_cloud = PointCloud2()
         self.point_cloud.header.frame_id = "map"
         self.point_cloud.height = 1
@@ -114,17 +108,16 @@ class PointCloudGeneratorNode(Node):
         else:
             cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4, self.depth3d)
 
-        xyz = self.depth3d[self.border:-self.border, self.border:-self.border, :]
-        bgr = self.rectified[self.border:-self.border, self.border:-self.border, :]
+        xyz = -self.depth3d
+        bgr = self.rectified
 
-        x = -xyz[:, :, 0]
-        y = -xyz[:, :, 1]
-        z = -xyz[:, :, 2]
+        x = xyz[:, :, 0]
+        y = xyz[:, :, 1]
+        z = xyz[:, :, 2]
         valid = ~(np.isinf(x) | np.isinf(y) | np.isinf(z))
 
-        in_range = valid & (y >= self.y_min) & (y <= self.y_max) & (z >= self.z_min) & (z <= self.z_max)
-        xyz = xyz[in_range]
-        bgr = bgr[in_range]
+        xyz = xyz[valid]
+        bgr = bgr[valid]
 
         downsample = 10
         xyz = xyz[::downsample, :]
@@ -159,7 +152,6 @@ class PointCloudGeneratorNode(Node):
                          (bgr[:, 0].astype(np.uint32)))
         total = self.disparity.size
         self.logger.info(f"{self.point_cloud.width} / {total} number of points used")
-        self.logger.info(f"{np.sum(in_range)} / {total} in_range points")
         self.logger.info(f"{np.sum(valid)} / {total} valid points")
         self.point_cloud_publisher.publish(self.point_cloud)
 

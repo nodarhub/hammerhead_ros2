@@ -5,26 +5,20 @@ from sensor_msgs.msg import PointCloud2, PointField
 
 def to_point_cloud_msg(details,
                        disparity,
-                       rectified,
-                       border=8,
-                       y_min=-50.0,
-                       y_max=50.0,
-                       z_min=8.0,
-                       z_max=500.0):
+                       rectified):
     disparity_scaled = disparity.astype(np.float32) / 16.0
     depth3d = cv2.reprojectImageTo3D(disparity_scaled, details.disparity_to_depth4x4)
 
-    xyz = depth3d[border:-border, border:-border, :]
-    bgr = rectified[border:-border, border:-border, :]
+    xyz = -depth3d
+    bgr = rectified
 
-    x = -xyz[:, :, 0]
-    y = -xyz[:, :, 1]
-    z = -xyz[:, :, 2]
+    x = xyz[:, :, 0]
+    y = xyz[:, :, 1]
+    z = xyz[:, :, 2]
     valid = ~(np.isinf(x) | np.isinf(y) | np.isinf(z))
 
-    in_range = valid & (y >= y_min) & (y <= y_max) & (z >= z_min) & (z <= z_max)
-    xyz = xyz[in_range]
-    bgr = bgr[in_range]
+    xyz = xyz[valid]
+    bgr = bgr[valid]
 
     downsample = 10
     xyz = xyz[::downsample, :]
@@ -74,6 +68,5 @@ def to_point_cloud_msg(details,
 
     # total = disparity.size
     # print(f"{point_cloud.width} / {total} number of points used")
-    # print(f"{np.sum(in_range)} / {total} in_range points")
     # print(f"{np.sum(valid)} / {total} valid points")
     return point_cloud

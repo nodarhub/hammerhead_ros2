@@ -1,5 +1,3 @@
-import time
-
 import cv2
 import numpy as np
 import rclpy
@@ -112,7 +110,7 @@ class PointCloudGeneratorNode(Node):
         bgr = self.rectified
         if bgr.dtype == np.uint16 or bgr.dtype == np.int16:
             bgr = (bgr / 257).astype(np.uint8)
-        if bgr.dtype != np.uint8 or bgr.dtype != np.int8:
+        if not (bgr.dtype == np.uint8 or bgr.dtype == np.int8):
             self.logger.error("Rectified image should be uint8 or int8")
             return
         x = xyz[:, :, 0]

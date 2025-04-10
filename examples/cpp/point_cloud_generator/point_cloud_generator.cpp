@@ -74,120 +74,106 @@ private:
         return not std::isinf(xyz[0]) and not std::isinf(xyz[1]) and not std::isinf(xyz[2]);
     }
 
-    bool inRange(const float* const xyz) {
-        const auto x = -xyz[0];
-        const auto y = -xyz[1];
-        const auto z = -xyz[2];
-        return not(std::isinf(x)  //
-                   or std::isinf(y) or y < y_min or y > y_max  //
-                   or std::isinf(z) or z < z_min or z > z_max);
-    }
-
     void onNewMessage(const Msg::SharedPtr msg) {
         RCLCPP_INFO(logger, "onNewMessage");
-
-        size_t num_point_cloud_subs = 0;
-        num_point_cloud_subs = count_subscribers(point_cloud_publisher->get_topic_name());
-
-        if (num_point_cloud_subs > 0) {
-            // Retrieve OpenCV matrices from the message
-            if (not fromMessage(msg->disparity, disparity) or  //
-                not fromMessage(msg->rectified, rectified)) {
-                return;
-            }
-
-            const auto& data = msg->disparity_to_depth4x4.data();
-            std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());
-
-            // Construct the point cloud
-            PointCloud point_cloud;
-            point_cloud.header.frame_id = "map";
-            point_cloud.height = msg->rectified.height;
-            point_cloud.width = msg->rectified.width;
-            sensor_msgs::PointCloud2Modifier modifier(point_cloud);
-            modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
-            modifier.resize(point_cloud.height * point_cloud.width);
-            sensor_msgs::PointCloud2Iterator<float> x(point_cloud, "x");
-            sensor_msgs::PointCloud2Iterator<float> y(point_cloud, "y");
-            sensor_msgs::PointCloud2Iterator<float> z(point_cloud, "z");
-            sensor_msgs::PointCloud2Iterator<uint8_t> r(point_cloud, "r");
-            sensor_msgs::PointCloud2Iterator<uint8_t> g(point_cloud, "g");
-            sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
-
-            // Disparity is in 11.6 format
-            disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
-            cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_depth4x4);
-
-            auto xyz = reinterpret_cast<float*>(depth3d.data);
-            auto bgr = rectified.data;
-            const auto rows = disparity.rows;
-            const auto cols = disparity.cols;
-            const auto min_row = border;
-            const auto max_row = rows - 1 - border;
-            const auto min_col = border;
-            const auto max_col = cols - 1 - border;
-            size_t total = 0;
-            size_t in_range = 0;
-            size_t valid = 0;
-            const auto downsample = 10;
-            size_t num_points = 0;
-            try {
-                for (size_t row = 0; row < rows; ++row) {
-                    for (size_t col = 0; col < cols; ++col, xyz += 3, bgr += 3) {
-                        if (row > min_row and row < max_row and col > min_col and col < max_col and isValid(xyz)) {
-                            ++valid;
-                            if (inRange(xyz)) {
-                                ++in_range;
-                                if ((in_range % downsample) == 0) {
-                                    ++num_points;
-                                    *x = -xyz[0], *y = xyz[1], *z = xyz[2];
-                                    *b = bgr[0], *g = bgr[1], *r = bgr[2];
-                                    ++x, ++y, ++z, ++r, ++g, ++b;
-                                }
-                            }
-                        }
-                        ++total;
-                    }
-                }
-            } catch (...) {
-                RCLCPP_ERROR(logger, "Error generating point cloud");
-            }
-            modifier.resize(num_points);
-            if (true) {
-                std::cout << num_points << " / " << total << " number of points used" << std::endl;
-                std::cout << in_range << " / " << total << " in_range points" << std::endl;
-                std::cout << valid << " / " << total << " valid points" << std::endl;
-            }
-            point_cloud_publisher->publish(point_cloud);
-        } else {
-            RCLCPP_INFO(get_logger(), "Point Cloud not subscribed");
+        if (count_subscribers(point_cloud_publisher->get_topic_name()) == 0) {
+            RCLCPP_INFO(get_logger(), "Nobody is subscribed nodar/point_cloud");
+            return;
         }
+
+        // Retrieve OpenCV matrices from the message
+        if (not fromMessage(msg->disparity, disparity) or  //
+            not fromMessage(msg->rectified, rectified)) {
+            return;
+        }
+
+        const auto& data = msg->disparity_to_depth4x4.data();
+        std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());
+
+        // Construct the point cloud
+        PointCloud point_cloud;
+        point_cloud.header.frame_id = "map";
+        point_cloud.height = msg->rectified.height;
+        point_cloud.width = msg->rectified.width;
+        sensor_msgs::PointCloud2Modifier modifier(point_cloud);
+        modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
+        modifier.resize(point_cloud.height * point_cloud.width);
+        sensor_msgs::PointCloud2Iterator<float> x(point_cloud, "x");
+        sensor_msgs::PointCloud2Iterator<float> y(point_cloud, "y");
+        sensor_msgs::PointCloud2Iterator<float> z(point_cloud, "z");
+        sensor_msgs::PointCloud2Iterator<uint8_t> r(point_cloud, "r");
+        sensor_msgs::PointCloud2Iterator<uint8_t> g(point_cloud, "g");
+        sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
+
+        // Disparity is in 11.6 format
+        disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
+        cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_depth4x4);
+
+        // Assert types before continuing
+        assert(depth3d.type() == CV_32FC3);
+        const auto rect_type = rectified.type();
+        assert(rect_type == CV_8UC3 or rect_type == CV_8SC3 or rect_type == CV_16UC3 or rect_type == CV_16SC3);
+
+        auto xyz = reinterpret_cast<float*>(depth3d.data);
+        const auto bgr_step = rect_type == CV_8UC3 or rect_type == CV_8SC3 ? 3 : 6;
+        auto bgr = rectified.data;
+        const auto rows = disparity.rows;
+        const auto cols = disparity.cols;
+        size_t total = 0;
+        size_t valid = 0;
+        const auto downsample = 10;
+        size_t num_points = 0;
+        try {
+            for (size_t row = 0; row < rows; ++row) {
+                for (size_t col = 0; col < cols; ++col, xyz += 3, bgr += bgr_step) {
+                    ++total;
+                    if (not isValid(xyz)) {
+                        continue;
+                    }
+                    ++valid;
+                    if (valid % downsample) {
+                        continue;
+                    }
+                    ++num_points;
+                    *x = -xyz[0], *y = -xyz[1], *z = -xyz[2];
+                    if (rect_type == CV_8UC3 or rect_type == CV_8SC3) {
+                        *b = bgr[0];
+                        *g = bgr[1];
+                        *r = bgr[2];
+                    } else if (rect_type == CV_16UC3 or rect_type == CV_16SC3) {
+                        const auto* bgr16 = reinterpret_cast<const uint16_t*>(bgr);
+                        *b = static_cast<uint8_t>(bgr16[0] / 257);
+                        *g = static_cast<uint8_t>(bgr16[1] / 257);
+                        *r = static_cast<uint8_t>(bgr16[2] / 257);
+                    }
+                    ++x, ++y, ++z, ++r, ++g, ++b;
+                }
+            }
+        } catch (...) {
+            RCLCPP_ERROR(logger, "Error generating point cloud");
+        }
+        modifier.resize(num_points);
+        if (true) {
+            std::cout << num_points << " / " << total << " number of points used" << std::endl;
+            std::cout << valid << " / " << total << " valid points" << std::endl;
+        }
+        point_cloud_publisher->publish(point_cloud);
     }
 
     rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
     rclcpp::Subscription<Msg>::SharedPtr subscription;
     rclcpp::Publisher<PointCloud>::SharedPtr point_cloud_publisher;
     cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4;
-    size_t border = 8;
-    float z_min = 8.0;
-    float z_max = 500.0;
-    float y_min = -50.0;
-    float y_max = 50.0;
 };
 
 int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
     rclcpp::init(argc, argv);
-
     rclcpp::executors::MultiThreadedExecutor exec;
-
     auto point_cloud_generator_node = std::make_shared<PointCloudGeneratorNode>();
     exec.add_node(point_cloud_generator_node);
-
     exec.spin();
-
     rclcpp::shutdown();
-
     return 0;
 }

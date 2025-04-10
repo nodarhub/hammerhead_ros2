@@ -5,41 +5,20 @@ from sensor_msgs.msg import PointCloud2, PointField
 
 def to_point_cloud_msg(details,
                        disparity,
-                       rectified,
-                       border=8,
-                       y_min=-50.0,
-                       y_max=50.0,
-                       z_min=8.0,
-                       z_max=500.0):
+                       rectified):
     disparity_scaled = disparity.astype(np.float32) / 16.0
     depth3d = cv2.reprojectImageTo3D(disparity_scaled, details.disparity_to_depth4x4)
 
-    xyz = depth3d[border:-border, border:-border, :]
-    bgr = rectified[border:-border, border:-border, :]
-    valid = ~np.isinf(xyz).all(axis=2)
+    xyz = -depth3d
+    bgr = rectified
 
-    x = -xyz[:, :, 0]
-    y = -xyz[:, :, 1]
-    z = -xyz[:, :, 2]
+    x = xyz[:, :, 0]
+    y = xyz[:, :, 1]
+    z = xyz[:, :, 2]
+    valid = ~(np.isinf(x) | np.isinf(y) | np.isinf(z))
 
-    # Filter out inf values
-    x_filtered = x[~np.isinf(x)]
-    y_filtered = y[~np.isinf(y)]
-    z_filtered = z[~np.isinf(z)]
-
-    # Calculate min and max values for x, y, and z
-    min_x, max_x = np.min(x_filtered), np.max(x_filtered)
-    min_y, max_y = np.min(y_filtered), np.max(y_filtered)
-    min_z, max_z = np.min(z_filtered), np.max(z_filtered)
-
-    # Print the results
-    print(f"Min x: {min_x}, Max x: {max_x}")
-    print(f"Min y: {min_y}, Max y: {max_y}")
-    print(f"Min z: {min_z}, Max z: {max_z}")
-
-    in_range = valid & (y >= y_min) & (y <= y_max) & (z >= z_min) & (z <= z_max)
-    xyz = xyz[in_range]
-    bgr = bgr[in_range]
+    xyz = xyz[valid]
+    bgr = bgr[valid]
 
     downsample = 10
     xyz = xyz[::downsample, :]
@@ -89,6 +68,5 @@ def to_point_cloud_msg(details,
 
     # total = disparity.size
     # print(f"{point_cloud.width} / {total} number of points used")
-    # print(f"{np.sum(in_range)} / {total} in_range points")
     # print(f"{np.sum(valid)} / {total} valid points")
     return point_cloud

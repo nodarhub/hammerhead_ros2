@@ -16,19 +16,12 @@ inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, c
     cv::Mat point_cloud;
     cv::reprojectImageTo3D(disparity, point_cloud, details.projection);
 
-    // Remove some area around the border
-    const auto border = 8;
-    const auto width = std::max(0, point_cloud.rows - 2 * border);
-    const auto height = std::max(0, point_cloud.cols - 2 * border);
-    cv::Mat point_cloud_trimmed = point_cloud({border, border, height, width});
-    cv::Mat left_rect_trimmed = left_rect({border, border, height, width});
-
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;
     point_cloud_msg.header.stamp = time == 0 ? rclcpp::Clock{}.now() : rclcpp::Time(details.left_time);
     point_cloud_msg.header.frame_id = "map";
-    point_cloud_msg.height = point_cloud_trimmed.rows;
-    point_cloud_msg.width = point_cloud_trimmed.cols;
+    point_cloud_msg.height = point_cloud.rows;
+    point_cloud_msg.width = point_cloud.cols;
     sensor_msgs::PointCloud2Modifier modifier(point_cloud_msg);
     modifier.setPointCloud2FieldsByString(2, "xyz", "rgb");
     modifier.resize(point_cloud_msg.height * point_cloud_msg.width);
@@ -44,22 +37,24 @@ inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, c
     // 10 reduces the data by a factor of 10
     // Without downsampling, the point cloud can be extremely large
     const auto downsample = 1;
-    size_t in_range = 0;
+    size_t valid = 0;
     size_t num_points = 0;
     PointFilter point_filter;
-    auto xyz = reinterpret_cast<float *>(point_cloud_trimmed.data);
-    auto bgr = left_rect_trimmed.data;
+    auto xyz = reinterpret_cast<float *>(point_cloud.data);
+    auto bgr = left_rect.data;
     try {
-        for (size_t i = 0; i < point_cloud_trimmed.total(); ++i, xyz += 3, bgr += 3) {
-            if (point_filter.isValid(xyz) and point_filter.inRange(xyz)) {
-                ++in_range;
-                if ((in_range % downsample) == 0) {
-                    ++num_points;
-                    *x = -xyz[0], *y = xyz[1], *z = xyz[2];
-                    *b = bgr[0], *g = bgr[1], *r = bgr[2];
-                    ++x, ++y, ++z, ++r, ++g, ++b;
-                }
+        for (size_t i = 0; i < point_cloud.total(); ++i, xyz += 3, bgr += 3) {
+            if (not point_filter.isValid(xyz)) {
+                continue;
             }
+            ++valid;
+            if (valid % downsample) {
+                continue;
+            }
+            ++num_points;
+            *x = -xyz[0], *y = -xyz[1], *z = -xyz[2];
+            *b = bgr[0], *g = bgr[1], *r = bgr[2];
+            ++x, ++y, ++z, ++r, ++g, ++b;
         }
     } catch (...) {
         std::cerr << "Error generating point cloud" << std::endl;

@@ -106,7 +106,7 @@ private:
         sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
 
         // Disparity is in 11.6 format
-        disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
+        disparity.convertTo(disparity_scaled, CV_32F, -1. / 16);
         cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_depth4x4);
 
         // Assert types before continuing
@@ -135,7 +135,7 @@ private:
                         continue;
                     }
                     ++num_points;
-                    *x = -xyz[0], *y = -xyz[1], *z = -xyz[2];
+                    *x = xyz[0], *y = xyz[1], *z = xyz[2];
                     if (rect_type == CV_8UC3 or rect_type == CV_8SC3) {
                         *b = bgr[0];
                         *g = bgr[1];

@@ -23,7 +23,7 @@ inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, c
     disparity_to_depth4x4.at<float>(3, 2) = -disparity_to_depth4x4.at<float>(3, 2);
     disparity_to_depth4x4.at<float>(3, 3) = -disparity_to_depth4x4.at<float>(3, 3);
 
-    cv::reprojectImageTo3D(disparity, point_cloud, details.projection);
+    cv::reprojectImageTo3D(disparity, point_cloud, disparity_to_depth4x4);
 
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;

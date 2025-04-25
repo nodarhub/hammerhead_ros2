@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
         }
         // Scaled disparity image for conversion to point cloud
         cv::Mat disparity_image_scaled;
-        disparity_image.convertTo(disparity_image_scaled, CV_32FC1, -1.0 / 16.0);
+        disparity_image.convertTo(disparity_image_scaled, CV_32FC1, 1.0 / 16.0);
 
         // "topbot" is a vertically stacked frame with the raw left and right image.
         const auto left_raw = topbot.rowRange(0, topbot.rows / 2);

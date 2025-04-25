@@ -14,6 +14,15 @@
 inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
     // Convert the disparity map to a point cloud
     cv::Mat point_cloud;
+
+    // Reverse the sign of the last row of disparity_to_depth4x4
+    cv::Mat disparity_to_depth4x4;
+    details.projection.copyTo(disparity_to_depth4x4);
+    disparity_to_depth4x4.at<float>(3, 0) = -disparity_to_depth4x4.at<float>(3, 0);
+    disparity_to_depth4x4.at<float>(3, 1) = -disparity_to_depth4x4.at<float>(3, 1);
+    disparity_to_depth4x4.at<float>(3, 2) = -disparity_to_depth4x4.at<float>(3, 2);
+    disparity_to_depth4x4.at<float>(3, 3) = -disparity_to_depth4x4.at<float>(3, 3);
+
     cv::reprojectImageTo3D(disparity, point_cloud, details.projection);
 
     // Create the point cloud message and a modifier to iterate over it

@@ -89,6 +89,11 @@ private:
 
         const auto& data = msg->disparity_to_depth4x4.data();
         std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());
+        // Flip the last row of the matrix so that the point cloud is in the correct coordinate system.
+        disparity_to_depth4x4.at<float>(3, 0) = -disparity_to_depth4x4.at<float>(3, 0);
+        disparity_to_depth4x4.at<float>(3, 1) = -disparity_to_depth4x4.at<float>(3, 1);
+        disparity_to_depth4x4.at<float>(3, 2) = -disparity_to_depth4x4.at<float>(3, 2);
+        disparity_to_depth4x4.at<float>(3, 3) = -disparity_to_depth4x4.at<float>(3, 3);
 
         // Construct the point cloud
         PointCloud point_cloud;
@@ -106,7 +111,7 @@ private:
         sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
 
         // Disparity is in 11.6 format
-        disparity.convertTo(disparity_scaled, CV_32F, -1. / 16);
+        disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
         cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_depth4x4);
 
         // Assert types before continuing

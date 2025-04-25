@@ -100,11 +100,13 @@ class PointCloudGeneratorNode(Node):
                          f"\tbaseline     : {msg.baseline}\n"
                          )
 
-        disparity_scaled = -self.disparity / np.float32(16)
+        disparity_scaled = self.disparity / np.float32(16)
+        q_matrix = self.disparity_to_depth4x4.copy()
+        q_matrix[3, :] *= -1.0
         if self.depth3d is None:
-            self.depth3d = cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4)
+            self.depth3d = cv2.reprojectImageTo3D(disparity_scaled, q_matrix)
         else:
-            cv2.reprojectImageTo3D(disparity_scaled, self.disparity_to_depth4x4, self.depth3d)
+            cv2.reprojectImageTo3D(disparity_scaled, q_matrix, self.depth3d)
 
         xyz = self.depth3d
         bgr = self.rectified

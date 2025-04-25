@@ -78,7 +78,7 @@ int main(int argc, char *argv[]) {
     for (const auto &disparity : tq::tqdm(disparities)) {
         // Safely load all the images.
         auto disparity_image = safeLoad(disparity, cv::IMREAD_ANYDEPTH, CV_16UC1, disparity, "disparity image");
-        disparity_image.convertTo(disparity_image, CV_32FC1, 1.0 / 16.0);
+
         // New versions of the sdk save images as .tiff instead of .png
         // Look for a tiff, and if it doesn't exist, look for a png.
         const auto left_rect_tiff = left_rect_dir / (disparity.stem().string() + ".tiff");
@@ -93,6 +93,9 @@ int main(int argc, char *argv[]) {
         if (disparity_image.empty() or left_rect.empty() or topbot.empty()) {
             continue;
         }
+        // Scaled disparity image for conversion to point cloud
+        cv::Mat disparity_image_scaled;
+        disparity_image.convertTo(disparity_image_scaled, CV_32FC1, -1.0 / 16.0);
 
         // "topbot" is a vertically stacked frame with the raw left and right image.
         const auto left_raw = topbot.rowRange(0, topbot.rows / 2);
@@ -108,7 +111,7 @@ int main(int argc, char *argv[]) {
         const Details details(details_filename);
 
         // Write the messages
-        bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, disparity_image, left_rect));
+        bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, disparity_image_scaled, left_rect));
         bag_writer.write("nodar/left/image_raw", toImageMsg(left_raw, details.left_time));
         bag_writer.write("nodar/right/image_raw", toImageMsg(right_raw, details.right_time));
         bag_writer.write("nodar/left/image_rect", toImageMsg(left_rect, details.left_time));

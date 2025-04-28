@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     for (const auto &disparity : tq::tqdm(disparities)) {
         // Safely load all the images.
         auto disparity_image = safeLoad(disparity, cv::IMREAD_ANYDEPTH, CV_16UC1, disparity, "disparity image");
-        disparity_image.convertTo(disparity_image, CV_32FC1, -1.0 / 16.0);
+        disparity_image.convertTo(disparity_image, CV_32FC1, 1.0 / 16.0);
         // New versions of the sdk save images as .tiff instead of .png
         // Look for a tiff, and if it doesn't exist, look for a png.
         const auto left_rect_tiff = left_rect_dir / (disparity.stem().string() + ".tiff");

@@ -14,7 +14,12 @@
 inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
     // Convert the disparity map to a point cloud
     cv::Mat point_cloud;
-    cv::reprojectImageTo3D(disparity, point_cloud, details.projection);
+
+    cv::Mat disparity_to_depth4x4 = details.projection.clone();
+    // Negate the last row of the Q-matrix
+    disparity_to_depth4x4.row(3) = -disparity_to_depth4x4.row(3);
+
+    cv::reprojectImageTo3D(disparity, point_cloud, disparity_to_depth4x4);
 
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;

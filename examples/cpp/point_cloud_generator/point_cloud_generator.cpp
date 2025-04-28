@@ -89,11 +89,8 @@ private:
 
         const auto& data = msg->disparity_to_depth4x4.data();
         std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());
-        // Flip the last row of the matrix so that the point cloud is in the correct coordinate system.
-        disparity_to_depth4x4.at<float>(3, 0) = -disparity_to_depth4x4.at<float>(3, 0);
-        disparity_to_depth4x4.at<float>(3, 1) = -disparity_to_depth4x4.at<float>(3, 1);
-        disparity_to_depth4x4.at<float>(3, 2) = -disparity_to_depth4x4.at<float>(3, 2);
-        disparity_to_depth4x4.at<float>(3, 3) = -disparity_to_depth4x4.at<float>(3, 3);
+        // Negate the last row of the Q-matrix
+        disparity_to_depth4x4.row(3) = -disparity_to_depth4x4.row(3);
 
         // Construct the point cloud
         PointCloud point_cloud;

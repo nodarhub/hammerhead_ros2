@@ -8,6 +8,7 @@ def to_point_cloud_msg(details,
                        rectified):
     disparity_scaled = disparity.astype(np.float32) / 16.0
     q_matrix = details.disparity_to_depth4x4.copy()
+    # Negate the last row of the Q-matrix
     q_matrix[3, :] *= -1.0
     xyz = cv2.reprojectImageTo3D(disparity_scaled, q_matrix)
     bgr = rectified

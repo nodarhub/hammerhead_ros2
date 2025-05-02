@@ -91,16 +91,14 @@ private:
 
         const auto &data = msg->disparity_to_depth4x4.data();
         std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());
-        std::copy(msg->rotation_disparity_to_raw_cam.begin(),
-                  msg->rotation_disparity_to_raw_cam.end(),
+        std::copy(msg->rotation_disparity_to_raw_cam.begin(), msg->rotation_disparity_to_raw_cam.end(),
                   rotation_disparity_to_raw_cam.begin<float>());
-        std::copy(msg->rotation_world_to_raw_cam.begin(),
-                  msg->rotation_world_to_raw_cam.end(),
+        std::copy(msg->rotation_world_to_raw_cam.begin(), msg->rotation_world_to_raw_cam.end(),
                   rotation_world_to_raw_cam.begin<float>());
         // Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
         cv::Mat1f rotation_disparity_to_world_4x4 = cv::Mat::eye(4, 4, CV_32F);
         cv::Mat(rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam)
-                .convertTo(rotation_disparity_to_world_4x4(cv::Rect(0, 0, 3, 3)), CV_32F);
+            .convertTo(rotation_disparity_to_world_4x4(cv::Rect(0, 0, 3, 3)), CV_32F);
         cv::Mat disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 * disparity_to_depth4x4;
 
         // Negate the last row of the Q-matrix
@@ -117,9 +115,9 @@ private:
         sensor_msgs::PointCloud2Iterator<float> x(point_cloud, "x");
         sensor_msgs::PointCloud2Iterator<float> y(point_cloud, "y");
         sensor_msgs::PointCloud2Iterator<float> z(point_cloud, "z");
-        sensor_msgs::PointCloud2Iterator <uint8_t> r(point_cloud, "r");
-        sensor_msgs::PointCloud2Iterator <uint8_t> g(point_cloud, "g");
-        sensor_msgs::PointCloud2Iterator <uint8_t> b(point_cloud, "b");
+        sensor_msgs::PointCloud2Iterator<uint8_t> r(point_cloud, "r");
+        sensor_msgs::PointCloud2Iterator<uint8_t> g(point_cloud, "g");
+        sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
 
         // Disparity is in 11.6 format
         disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
@@ -179,7 +177,8 @@ private:
     rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
     rclcpp::Subscription<Msg>::SharedPtr subscription;
     rclcpp::Publisher<PointCloud>::SharedPtr point_cloud_publisher;
-    cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4, rotation_disparity_to_raw_cam, rotation_world_to_raw_cam;
+    cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4, rotation_disparity_to_raw_cam,
+        rotation_world_to_raw_cam;
 };
 
 int main(int argc, char *argv[]) {

@@ -14,7 +14,7 @@ void signalHandler(int signum) {
     std::exit(EXIT_FAILURE);
 }
 
-bool fromMessage(const sensor_msgs::msg::Image& msg, cv::Mat& img) {
+bool fromMessage(const sensor_msgs::msg::Image &msg, cv::Mat &img) {
     // Get the type
     int cv_type = -1;
     if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_rggb8" or msg.encoding == "mono8") {
@@ -67,10 +67,12 @@ public:
                                                       [=](const Msg::SharedPtr msg) { this->onNewMessage(msg); });
         point_cloud_publisher = this->create_publisher<PointCloud>("nodar/point_cloud", qos);
         disparity_to_depth4x4 = cv::Mat(4, 4, CV_32FC1);
+        rotation_disparity_to_raw_cam = cv::Mat(3, 3, CV_32FC1);
+        rotation_world_to_raw_cam = cv::Mat(3, 3, CV_32FC1);
     }
 
 private:
-    bool isValid(const float* const xyz) {
+    bool isValid(const float *const xyz) {
         return not std::isinf(xyz[0]) and not std::isinf(xyz[1]) and not std::isinf(xyz[2]);
     }
 
@@ -87,10 +89,20 @@ private:
             return;
         }
 
-        const auto& data = msg->disparity_to_depth4x4.data();
+        const auto &data = msg->disparity_to_depth4x4.data();
         std::copy(data, data + 16, disparity_to_depth4x4.begin<float>());
+        std::copy(msg->rotation_disparity_to_raw_cam.begin(), msg->rotation_disparity_to_raw_cam.end(),
+                  rotation_disparity_to_raw_cam.begin<float>());
+        std::copy(msg->rotation_world_to_raw_cam.begin(), msg->rotation_world_to_raw_cam.end(),
+                  rotation_world_to_raw_cam.begin<float>());
+        // Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
+        cv::Mat1f rotation_disparity_to_world_4x4 = cv::Mat::eye(4, 4, CV_32F);
+        cv::Mat(rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam)
+            .convertTo(rotation_disparity_to_world_4x4(cv::Rect(0, 0, 3, 3)), CV_32F);
+        cv::Mat disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 * disparity_to_depth4x4;
+
         // Negate the last row of the Q-matrix
-        disparity_to_depth4x4.row(3) = -disparity_to_depth4x4.row(3);
+        disparity_to_rotated_depth4x4.row(3) = -disparity_to_rotated_depth4x4.row(3);
 
         // Construct the point cloud
         PointCloud point_cloud;
@@ -109,14 +121,14 @@ private:
 
         // Disparity is in 11.6 format
         disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
-        cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_depth4x4);
+        cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_rotated_depth4x4);
 
         // Assert types before continuing
         assert(depth3d.type() == CV_32FC3);
         const auto rect_type = rectified.type();
         assert(rect_type == CV_8UC3 or rect_type == CV_8SC3 or rect_type == CV_16UC3 or rect_type == CV_16SC3);
 
-        auto xyz = reinterpret_cast<float*>(depth3d.data);
+        auto xyz = reinterpret_cast<float *>(depth3d.data);
         const auto bgr_step = rect_type == CV_8UC3 or rect_type == CV_8SC3 ? 3 : 6;
         auto bgr = rectified.data;
         const auto rows = disparity.rows;
@@ -143,7 +155,7 @@ private:
                         *g = bgr[1];
                         *r = bgr[2];
                     } else if (rect_type == CV_16UC3 or rect_type == CV_16SC3) {
-                        const auto* bgr16 = reinterpret_cast<const uint16_t*>(bgr);
+                        const auto *bgr16 = reinterpret_cast<const uint16_t *>(bgr);
                         *b = static_cast<uint8_t>(bgr16[0] / 257);
                         *g = static_cast<uint8_t>(bgr16[1] / 257);
                         *r = static_cast<uint8_t>(bgr16[2] / 257);
@@ -165,10 +177,11 @@ private:
     rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
     rclcpp::Subscription<Msg>::SharedPtr subscription;
     rclcpp::Publisher<PointCloud>::SharedPtr point_cloud_publisher;
-    cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4;
+    cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4, rotation_disparity_to_raw_cam,
+        rotation_world_to_raw_cam;
 };
 
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
     rclcpp::init(argc, argv);

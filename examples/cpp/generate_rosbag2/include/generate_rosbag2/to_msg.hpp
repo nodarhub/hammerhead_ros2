@@ -8,14 +8,14 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-#include "generate_rosbag2/details.hpp"
+#include "generate_rosbag2/details_parameters.hpp"
 #include "generate_rosbag2/point_filter.hpp"
 
-inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
+inline auto toPointCloud2Msg(DetailsParameters &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
     // Convert the disparity map to a point cloud
     cv::Mat point_cloud;
 
-    cv::Mat disparity_to_depth4x4 = details.projection.clone();
+    cv::Mat disparity_to_depth4x4{cv::Size{4, 4}, CV_32FC1, details.projection.data()};
     // Negate the last row of the Q-matrix
     disparity_to_depth4x4.row(3) = -disparity_to_depth4x4.row(3);
 
@@ -23,7 +23,7 @@ inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, c
 
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;
-    point_cloud_msg.header.stamp = time == 0 ? rclcpp::Clock{}.now() : rclcpp::Time(details.left_time);
+    point_cloud_msg.header.stamp = time == 0 ? rclcpp::Clock{}.now() : rclcpp::Time(details.leftTime);
     point_cloud_msg.header.frame_id = "map";
     point_cloud_msg.height = point_cloud.rows;
     point_cloud_msg.width = point_cloud.cols;

@@ -4,7 +4,7 @@
 #include <vector>
 
 #include "generate_rosbag2/bag_writer.hpp"
-#include "generate_rosbag2/details.hpp"
+#include "generate_rosbag2/details_parameters.hpp"
 #include "generate_rosbag2/get_files.hpp"
 #include "generate_rosbag2/safe_load.hpp"
 #include "generate_rosbag2/to_msg.hpp"
@@ -86,13 +86,18 @@ int main(int argc, char *argv[]) {
         }
 
         // Load the details
-        const auto details_filename = details_dir / (disparity.stem().string() + ".csv");
+        const auto details_filename = details_dir / (disparity.stem().string() + ".yaml");
         if (not std::filesystem::exists(details_filename)) {
             std::cerr << "Could not find the corresponding details for\n"
                       << disparity << ". This path does not exist:\n"
                       << details_filename << std::endl;
         }
-        const Details details(details_filename);
+        DetailsParameters details{};
+        bool hasErrors{false};
+        if (!details.parse(details_filename, hasErrors)) {
+            std::cerr << "Could not parse the details file:\n" << details_filename << std::endl;
+            continue;
+        }
 
         // Write the messages
         bag_writer.write("nodar/point_cloud", toPointCloud2Msg(details, disparity_image, left_rect));

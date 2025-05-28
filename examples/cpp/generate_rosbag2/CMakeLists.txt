@@ -4,6 +4,12 @@ project(generate_rosbag2 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
+add_subdirectory(
+        ${CMAKE_SOURCE_DIR}/../../../submodules/yaml-cpp/yaml-cpp
+        ${CMAKE_BINARY_DIR}/yaml-cpp-build
+)
+
+
 find_package(OpenCV 4 REQUIRED COMPONENTS calib3d imgcodecs)
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
@@ -17,6 +23,7 @@ foreach (TARGET xyz everything)
     target_link_libraries(
             ${TARGET}
             PUBLIC
+            yaml-cpp
             opencv_calib3d
             opencv_imgcodecs
             stdc++fs)

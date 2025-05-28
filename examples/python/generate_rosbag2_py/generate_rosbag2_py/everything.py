@@ -7,7 +7,7 @@ import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from generate_rosbag2_py.bag_writer import BagWriter
-from generate_rosbag2_py.details import Details
+from generate_rosbag2_py.details_parameters import Details_parameters
 from generate_rosbag2_py.get_files import get_files
 from generate_rosbag2_py.safe_load import safe_load
 from generate_rosbag2_py.to_image_msg import to_image_msg
@@ -80,12 +80,12 @@ def main():
         left_raw = topbot[:topbot.shape[0] // 2]
         right_raw = topbot[topbot.shape[0] // 2:]
 
-        details_filename = os.path.join(details_dir, os.path.splitext(os.path.basename(disparity))[0] + ".csv")
+        details_filename = os.path.join(details_dir, os.path.splitext(os.path.basename(disparity))[0] + ".yaml")
         if not os.path.exists(details_filename):
             print(f"Could not find the corresponding details for\n{disparity}. "
                   f"This path does not exist:\n{details_filename}")
             continue
-        details = Details(details_filename)
+        details = Details_parameters(details_filename)
         bag_writer.write("nodar/point_cloud", to_point_cloud_msg(details, disparity_image, left_rect))
         bag_writer.write("nodar/left/image_raw", to_image_msg(bridge, left_raw, details.left_time))
         bag_writer.write("nodar/right/image_raw", to_image_msg(bridge, right_raw, details.right_time))

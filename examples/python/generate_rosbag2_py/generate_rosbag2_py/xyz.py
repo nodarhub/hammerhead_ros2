@@ -62,7 +62,7 @@ def main():
         left_rect_tiff = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
         left_rect_png = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".png")
         left_rect_filename = left_rect_tiff if os.path.exists(left_rect_tiff) else left_rect_png
-        left_rect = safe_load(left_rect_filename, cv2.IMREAD_UNCHANGED, [np.uint8, np.uint16], 3)
+        left_rect = safe_load(left_rect_filename, cv2.IMREAD_COLOR, [np.uint8], 3)
 
         if disparity_image is None or left_rect is None:
             continue

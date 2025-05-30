@@ -28,6 +28,7 @@ def main():
 
     disparity_dir = os.path.join(input_dir, "disparity")
     depth_dir = os.path.join(input_dir, "depth")
+    depth_colormap_dir = os.path.join(input_dir, "depth-colormap")  # Optional
     details_dir = os.path.join(input_dir, "details")
     left_rect_dir = os.path.join(input_dir, "left-rect")
     topbot_dir = os.path.join(input_dir, "topbot")
@@ -47,6 +48,7 @@ def main():
         {"name": "nodar/right/image_raw", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/left/image_rect", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/disparity/image_raw", "type": "sensor_msgs/msg/Image"},
+        {"name": "nodar/color_blended_depth/image_raw", "type": "sensor_msgs/msg/Image"},
     ]
 
     if os.path.exists(output_dir):
@@ -72,7 +74,7 @@ def main():
         topbot_tiff = os.path.join(topbot_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
         topbot_png = os.path.join(topbot_dir, os.path.splitext(os.path.basename(disparity))[0] + ".png")
         topbot_filename = topbot_tiff if os.path.exists(topbot_tiff) else topbot_png
-        topbot = safe_load(topbot_filename, cv2.IMREAD_UNCHANGED, [np.uint8, np.uint16], 3)
+        topbot = safe_load(topbot_filename, cv2.IMREAD_COLOR, [np.uint8], 3)
 
         if disparity_image is None or left_rect is None or topbot is None:
             continue
@@ -91,6 +93,14 @@ def main():
         bag_writer.write("nodar/right/image_raw", to_image_msg(bridge, right_raw, details.right_time))
         bag_writer.write("nodar/left/image_rect", to_image_msg(bridge, left_rect, details.left_time))
         bag_writer.write("nodar/disparity/image_raw", to_image_msg(bridge, disparity_image, details.left_time))
+        # Optional depth colormap
+        colormap_file = os.path.join(depth_colormap_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
+
+        if os.path.exists(colormap_file):
+            depth_colormap = cv2.imread(colormap_file, cv2.IMREAD_COLOR)
+            if depth_colormap is not None:
+                bag_writer.write("nodar/color_blended_depth/image_raw",
+                                 to_image_msg(bridge, depth_colormap, details.left_time))
 
     rclpy.shutdown()
 

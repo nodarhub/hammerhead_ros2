@@ -21,7 +21,7 @@ def to_point_cloud_msg(details_parameters,
     xyz = xyz[valid]
     bgr = bgr[valid]
 
-    downsample = 10
+    downsample = 1
     xyz = xyz[::downsample, :]
     bgr = bgr[::downsample, :]
 

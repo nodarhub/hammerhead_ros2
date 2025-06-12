@@ -17,7 +17,7 @@ setup(
     maintainer_email='support@nodarsensor.com',
     description='This example demonstrates how to stop/start the recording in realtime by using the ROS2 interface for hammerhead.',
     license='NODAR Limited Copyright License',
-    license_files=['LICENSE'],
+    # license_files=['LICENSE'],
     project_urls={
     'License': 'https://github.com/nodarhub/hammerhead_ros2/blob/main/LICENSE',
     },

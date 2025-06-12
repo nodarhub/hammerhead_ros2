@@ -17,7 +17,7 @@ setup(
     maintainer_email='support@nodarsensor.com',
     description='This example demonstrates how to subscribe to PointCloudSoup messages, generate downsampled PointCloud2 instances, and then publish the downsampled point clouds.',
     license='NODAR Limited Copyright License',
-    license_files=['LICENSE'],
+    # license_files=['LICENSE'],
     project_urls={
     'License': 'https://github.com/nodarhub/hammerhead_ros2/blob/main/LICENSE',
     },

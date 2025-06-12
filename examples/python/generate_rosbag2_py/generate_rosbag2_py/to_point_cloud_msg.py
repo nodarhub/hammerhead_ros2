@@ -3,14 +3,20 @@ import numpy as np
 from sensor_msgs.msg import PointCloud2, PointField
 
 
-def to_point_cloud_msg(details,
+def to_point_cloud_msg(details_parameters,
                        disparity,
                        rectified):
     disparity_scaled = disparity.astype(np.float32) / 16.0
-    q_matrix = details.disparity_to_depth4x4.copy()
+    q_matrix = details_parameters.disparity_to_depth4x4.copy()
+    # Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
+    rotation_disparity_to_world = details_parameters.rotation_world_to_raw_cam.T @ details_parameters.rotation_disparity_to_raw_cam
+    rotation_disparity_to_world_4x4 = np.eye(4, dtype=np.float32)
+    rotation_disparity_to_world_4x4[:3, :3] = rotation_disparity_to_world
+    disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 @ q_matrix
+
     # Negate the last row of the Q-matrix
-    q_matrix[3, :] *= -1.0
-    xyz = cv2.reprojectImageTo3D(disparity_scaled, q_matrix)
+    disparity_to_rotated_depth4x4[3, :] *= -1
+    xyz = cv2.reprojectImageTo3D(disparity_scaled, disparity_to_rotated_depth4x4)
     bgr = rectified
 
     x = xyz[:, :, 0]
@@ -21,7 +27,7 @@ def to_point_cloud_msg(details,
     xyz = xyz[valid]
     bgr = bgr[valid]
 
-    downsample = 10
+    downsample = 1
     xyz = xyz[::downsample, :]
     bgr = bgr[::downsample, :]
 

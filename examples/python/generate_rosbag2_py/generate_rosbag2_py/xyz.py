@@ -7,7 +7,7 @@ import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from generate_rosbag2_py.bag_writer import BagWriter
-from generate_rosbag2_py.details import Details
+from generate_rosbag2_py.details_parameters import Details_parameters
 from generate_rosbag2_py.get_files import get_files
 from generate_rosbag2_py.safe_load import safe_load
 from generate_rosbag2_py.to_image_msg import to_image_msg
@@ -62,17 +62,17 @@ def main():
         left_rect_tiff = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
         left_rect_png = os.path.join(left_rect_dir, os.path.splitext(os.path.basename(disparity))[0] + ".png")
         left_rect_filename = left_rect_tiff if os.path.exists(left_rect_tiff) else left_rect_png
-        left_rect = safe_load(left_rect_filename, cv2.IMREAD_UNCHANGED, [np.uint8, np.uint16], 3)
+        left_rect = safe_load(left_rect_filename, cv2.IMREAD_COLOR, [np.uint8], 3)
 
         if disparity_image is None or left_rect is None:
             continue
 
-        details_filename = os.path.join(details_dir, os.path.splitext(os.path.basename(disparity))[0] + ".csv")
+        details_filename = os.path.join(details_dir, os.path.splitext(os.path.basename(disparity))[0] + ".yaml")
         if not os.path.exists(details_filename):
             print(f"Could not find the corresponding details for\n{disparity}. "
                   f"This path does not exist:\n{details_filename}")
             continue
-        details = Details(details_filename)
+        details = Details_parameters(details_filename)
         bag_writer.write("nodar/point_cloud", to_point_cloud_msg(details, disparity_image, left_rect))
 
     rclpy.shutdown()

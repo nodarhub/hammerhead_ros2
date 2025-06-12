@@ -8,22 +8,31 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-#include "generate_rosbag2/details.hpp"
+#include "generate_rosbag2/details_parameters.hpp"
 #include "generate_rosbag2/point_filter.hpp"
 
-inline auto toPointCloud2Msg(const Details &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
+inline auto toPointCloud2Msg(DetailsParameters &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
     // Convert the disparity map to a point cloud
     cv::Mat point_cloud;
 
-    cv::Mat disparity_to_depth4x4 = details.projection.clone();
-    // Negate the last row of the Q-matrix
-    disparity_to_depth4x4.row(3) = -disparity_to_depth4x4.row(3);
+    cv::Mat disparity_to_depth4x4{cv::Size{4, 4}, CV_32FC1, details.projection.data()};
+    cv::Mat rotation_disparity_to_raw_cam{cv::Size{3, 3}, CV_32FC1, details.rotationDisparityToRawCam.data()};
+    cv::Mat rotation_world_to_raw_cam{cv::Size{3, 3}, CV_32FC1, details.rotationWorldToRawCam.data()};
 
-    cv::reprojectImageTo3D(disparity, point_cloud, disparity_to_depth4x4);
+    // Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
+    cv::Mat1f rotation_disparity_to_world_4x4 = cv::Mat::eye(4, 4, CV_32F);
+    cv::Mat(rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam)
+        .convertTo(rotation_disparity_to_world_4x4(cv::Rect(0, 0, 3, 3)), CV_32F);
+    cv::Mat disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 * disparity_to_depth4x4;
+
+    // Negate the last row of the Q-matrix
+    disparity_to_rotated_depth4x4.row(3) = -disparity_to_rotated_depth4x4.row(3);
+
+    cv::reprojectImageTo3D(disparity, point_cloud, disparity_to_rotated_depth4x4);
 
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;
-    point_cloud_msg.header.stamp = time == 0 ? rclcpp::Clock{}.now() : rclcpp::Time(details.left_time);
+    point_cloud_msg.header.stamp = time == 0 ? rclcpp::Clock{}.now() : rclcpp::Time(details.leftTime);
     point_cloud_msg.header.frame_id = "map";
     point_cloud_msg.height = point_cloud.rows;
     point_cloud_msg.width = point_cloud.cols;

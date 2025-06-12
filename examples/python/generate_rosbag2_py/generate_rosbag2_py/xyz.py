@@ -7,7 +7,7 @@ import numpy as np
 import rclpy
 from cv_bridge import CvBridge
 from generate_rosbag2_py.bag_writer import BagWriter
-from generate_rosbag2_py.details_parameters import Details_parameters
+from generate_rosbag2_py.details_parameters import DetailsParameters
 from generate_rosbag2_py.get_files import get_files
 from generate_rosbag2_py.safe_load import safe_load
 from generate_rosbag2_py.to_image_msg import to_image_msg
@@ -72,7 +72,7 @@ def main():
             print(f"Could not find the corresponding details for\n{disparity}. "
                   f"This path does not exist:\n{details_filename}")
             continue
-        details = Details_parameters(details_filename)
+        details = DetailsParameters(details_filename)
         bag_writer.write("nodar/point_cloud", to_point_cloud_msg(details, disparity_image, left_rect))
 
     rclpy.shutdown()

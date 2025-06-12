@@ -2,7 +2,7 @@ import yaml
 import numpy as np
 
 
-class Details_parameters:
+class DetailsParameters:
     def __init__(self, path_to_yaml: str):
         with open(path_to_yaml, "r") as f:
             data = yaml.safe_load(f)

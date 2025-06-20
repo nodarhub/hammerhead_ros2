@@ -90,6 +90,8 @@ inline std::shared_ptr<sensor_msgs::msg::Image> toImageMsg(const cv::Mat &img, u
         message->encoding = "mono16";
     } else if (img.type() == CV_32FC1) {
         message->encoding = "32FC1";
+    } else if (img.type() == CV_8UC1) {
+        message->encoding = "mono8";
     } else {
         std::cerr << "Trying to convert unknown image type" << std::endl;
         return nullptr;

@@ -24,6 +24,7 @@ int main(int argc, char *argv[]) {
     const auto disparity_dir = input_dir / "disparity";
     const auto depth_dir = input_dir / "depth";  // Possible alternative
     const auto depth_colormap_dir = input_dir / "depth-colormap";  // Optional
+    const auto occupancy_map_dir = input_dir / "occupancy-map";  // Optional
     const auto details_dir = input_dir / "details";
     const auto left_rect_dir = input_dir / "left-rect";
     const auto topbot_dir = input_dir / "topbot";
@@ -53,6 +54,7 @@ int main(int argc, char *argv[]) {
         {"nodar/left/image_rect", "sensor_msgs/msg/Image"},
         {"nodar/disparity/image_raw", "sensor_msgs/msg/Image"},
         {"nodar/color_blended_depth/image_raw", "sensor_msgs/msg/Image"},
+        {"nodar/occupancy_map/image_raw", "sensor_msgs/msg/Image"},
     }};
 
     // Remove old bag output if it exists
@@ -129,6 +131,15 @@ int main(int argc, char *argv[]) {
             const auto depth_colormap = safeLoad(colormap_file, cv::IMREAD_COLOR, CV_8UC3, disparity, "depth colormap");
             if (!depth_colormap.empty()) {
                 bag_writer.write("nodar/color_blended_depth/image_raw", toImageMsg(depth_colormap, details.leftTime));
+            }
+        }
+        // Optional occupancy maps
+        const auto occupancy_map_file = occupancy_map_dir / (disparity.stem().string() + ".tiff");
+        if (std::filesystem::exists(occupancy_map_file)) {
+            const auto occupancy_map =
+                safeLoad(occupancy_map_file, cv::IMREAD_GRAYSCALE, CV_8UC1, disparity, "occupancy map");
+            if (!occupancy_map.empty()) {
+                bag_writer.write("nodar/occupancy_map/image_raw", toImageMsg(occupancy_map, details.leftTime));
             }
         }
     }

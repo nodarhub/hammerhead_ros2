@@ -29,6 +29,7 @@ def main():
     disparity_dir = os.path.join(input_dir, "disparity")
     depth_dir = os.path.join(input_dir, "depth")
     depth_colormap_dir = os.path.join(input_dir, "depth-colormap")  # Optional
+    occupancy_map_dir = os.path.join(input_dir, "occupancy-map")  # Optional
     details_dir = os.path.join(input_dir, "details")
     left_rect_dir = os.path.join(input_dir, "left-rect")
     topbot_dir = os.path.join(input_dir, "topbot")
@@ -49,6 +50,7 @@ def main():
         {"name": "nodar/left/image_rect", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/disparity/image_raw", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/color_blended_depth/image_raw", "type": "sensor_msgs/msg/Image"},
+        {"name": "nodar/occupancy_map/image_raw", "type": "sensor_msgs/msg/Image"},
     ]
 
     if os.path.exists(output_dir):
@@ -101,6 +103,14 @@ def main():
             if depth_colormap is not None:
                 bag_writer.write("nodar/color_blended_depth/image_raw",
                                  to_image_msg(bridge, depth_colormap, details.left_time))
+        # Optional occupancy map
+        occupancy_map_file = os.path.join(occupancy_map_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
+
+        if os.path.exists(occupancy_map_file):
+            occupancy_map = cv2.imread(occupancy_map_file, cv2.IMREAD_COLOR)
+            if occupancy_map is not None:
+                bag_writer.write("nodar/occupancy_map/image_raw",
+                                 to_image_msg(bridge, occupancy_map, details.left_time))
 
     rclpy.shutdown()
 

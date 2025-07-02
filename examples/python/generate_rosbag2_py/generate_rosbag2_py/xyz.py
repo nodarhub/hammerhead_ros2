@@ -73,7 +73,8 @@ def main():
                   f"This path does not exist:\n{details_filename}")
             continue
         details = DetailsParameters(details_filename)
-        bag_writer.write("nodar/point_cloud", to_point_cloud_msg(details, disparity_image, left_rect))
+        bag_writer.write("nodar/point_cloud",
+                         to_point_cloud_msg(details, disparity_image, left_rect, details.left_time))
 
     rclpy.shutdown()
 

@@ -1,4 +1,5 @@
 import numpy as np
+from builtin_interfaces.msg import Time
 
 
 def to_image_msg(bridge, image, timestamp):
@@ -25,5 +26,8 @@ def to_image_msg(bridge, image, timestamp):
     else:
         raise ValueError("Unsupported image shape: {}".format(image.shape))
     img_msg = bridge.cv2_to_imgmsg(image, encoding=encoding)
-    # TODO Figure out what to do about the timestamp
+    ros_time = Time()
+    ros_time.sec = timestamp // 1_000_000_000
+    ros_time.nanosec = timestamp % 1_000_000_000
+    img_msg.header.stamp = ros_time
     return img_msg

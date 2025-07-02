@@ -29,4 +29,16 @@ class BagWriter:
             self.writer.create_topic(topic_metadata)
 
     def write(self, topic_name, msg):
-        self.writer.write(topic_name, serialize_message(msg), Clock().now().nanoseconds)
+        try:
+            sec = msg.header.stamp.sec
+            nanosec = msg.header.stamp.nanosec
+            stamp_ns = sec * 1000000000 + nanosec
+        except AttributeError:
+            # If message has no header or header.stamp, fall back to system time
+            print("Attribute error!")
+            stamp_ns = Clock().now().nanoseconds
+
+        # If the message timestamp is zero (missing), fall back to current system time
+        if stamp_ns == 0:
+            stamp_ns = Clock().now().nanoseconds
+        self.writer.write(topic_name, serialize_message(msg), stamp_ns)

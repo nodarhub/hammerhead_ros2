@@ -45,9 +45,17 @@ struct BagWriter {
             });
         *bag_message->serialized_data = msg.release_rcl_serialized_message();
         bag_message->topic_name = topic;
-        if (rcutils_system_time_now(&bag_message->time_stamp) != RCUTILS_RET_OK) {
-            printf("Error getting current time: %s", rcutils_get_error_string().str);
+        const auto &msg_stamp = point_cloud_msg.header.stamp;
+        auto stamp_ns = static_cast<uint64_t>(msg_stamp.sec) * 1000000000ull + static_cast<uint64_t>(msg_stamp.nanosec);
+        // If the message timestamp is zero (missing), fall back to current system time
+        if (stamp_ns == 0) {
+            rcutils_time_point_value_t now;
+            if (rcutils_system_time_now(&now) != RCUTILS_RET_OK) {
+                printf("Error getting current time: %s", rcutils_get_error_string().str);
+            }
+            stamp_ns = now;
         }
+        bag_message->time_stamp = stamp_ns;
         writer_->write(bag_message);
     }
 
@@ -66,9 +74,17 @@ struct BagWriter {
             });
         *bag_message->serialized_data = msg.release_rcl_serialized_message();
         bag_message->topic_name = topic;
-        if (rcutils_system_time_now(&bag_message->time_stamp) != RCUTILS_RET_OK) {
-            printf("Error getting current time: %s", rcutils_get_error_string().str);
+        const auto &msg_stamp = image_msg->header.stamp;
+        auto stamp_ns = static_cast<uint64_t>(msg_stamp.sec) * 1000000000ull + static_cast<uint64_t>(msg_stamp.nanosec);
+        // If the message timestamp is zero (missing), fall back to current system time
+        if (stamp_ns == 0) {
+            rcutils_time_point_value_t now;
+            if (rcutils_system_time_now(&now) != RCUTILS_RET_OK) {
+                printf("Error getting current time: %s", rcutils_get_error_string().str);
+            }
+            stamp_ns = now;
         }
+        bag_message->time_stamp = stamp_ns;
         writer_->write(bag_message);
     }
 

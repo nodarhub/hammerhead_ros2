@@ -1,11 +1,13 @@
 import cv2
 import numpy as np
 from sensor_msgs.msg import PointCloud2, PointField
+from builtin_interfaces.msg import Time
 
 
 def to_point_cloud_msg(details_parameters,
                        disparity,
-                       rectified):
+                       rectified,
+                       timestamp):
     disparity_scaled = disparity.astype(np.float32) / 16.0
     q_matrix = details_parameters.disparity_to_depth4x4.copy()
     # Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
@@ -33,6 +35,10 @@ def to_point_cloud_msg(details_parameters,
 
     point_cloud = PointCloud2()
     point_cloud.header.frame_id = "map"
+    ros_time = Time()
+    ros_time.sec = timestamp // 1_000_000_000
+    ros_time.nanosec = timestamp % 1_000_000_000
+    point_cloud.header.stamp = ros_time
     point_cloud.height = 1
     fields = [
         PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),

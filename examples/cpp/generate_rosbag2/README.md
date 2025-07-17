@@ -1,59 +1,124 @@
-This package converts the data recorded by hammerhead into a ROS2 bag. There are several examples contained herein:
+# Generate ROS Bag
 
-1. `xyz`: Generates a bag containing only PointCloud2
-   messages (https://docs.ros2.org/foxy/api/sensor_msgs/msg/PointCloud2.html) with points containing
-   `x,y,z` and `r,g,b` attributes.
-1. `everything`: Generates a bag containing the aforemented point clouds as well as some image data:
-    - The raw left and right camera images
-    - The rectified left camera image
+Convert data recorded by Hammerhead into ROS2 bag format for analysis and replay.
 
-To use this example, you need to record data with hammerhead, and then
-provide the output directory to this example as a command line parameter. Specifically, when recording, hammerhead will
-generate a folder of data of the form:
+## Overview
 
-    20230208-133746/
-        disparity/
-            000000000.tiff
-            000000001.tiff
-            ...
-        details/
-            000000000.csv
-            000000001.csv
-            ...
+This package provides tools to convert Hammerhead recorded data into standard ROS2 bag format, making it easy to analyze and replay stereo vision data.
 
-To run the current example, you should ensure that this example is in a ROS2 workspace
+## Available Tools
 
-    hammerhead_ros2_ws/
-        src/
-            generate_rosbag2/
+### `xyz` - Point Cloud Only
+Generates a bag containing only `sensor_msgs/PointCloud2` messages with points containing `x,y,z` and `r,g,b` attributes.
 
-and then from the root of the workspace: build, install, and run one of the targets (`xyz` or `everything`) with the
-path to the directory used for recording (in this case, `20230208-133746`):
+### `everything` - Complete Dataset
+Generates a bag containing point clouds plus image data:
+- Raw left and right camera images
+- Rectified left camera image
+- Generated point cloud data
 
-    cd hammerhead_ros2_ws
-    colcon build
-    . install/setup.bash
-    # You can run either the `xyz` or `everything` target
-    # ros2 run generate_rosbag2 xyz 20230208-133746
-    ros2 run generate_rosbag2 everything 20230208-133746
+## Installation
 
-This will generate a `bag` folder inside the specified directory:
+This example is part of the hammerhead_ros2 workspace:
 
-    20230208-133746/
-                bag/
-                    bag_0.db3  
-                    metadata.yaml
-                disparity/
-                    000000000.tiff
-                    000000001.tiff
-                    ...
-                details/
-                    000000000.csv
-                    000000001.csv
-                    ...
+```bash
+cd hammerhead_ros2
+colcon build --packages-select generate_rosbag2
+```
 
-Alternatively, if you want to save the bag in a different location, then you can provide that as the second argument to
-the executable. For example, to save the data in a bag called `my_bag` in the `Downloads` folder:
+## Usage
 
-    ros2 run generate_rosbag2 everything 20230208-133746 ~/Downloads/my_bag
+### Prerequisites
+
+You need data recorded by Hammerhead in the following format:
+
+```
+20230208-133746/
+    disparity/
+        000000000.tiff
+        000000001.tiff
+        ...
+    details/
+        000000000.csv
+        000000001.csv
+        ...
+```
+
+### Basic Usage
+
+```bash
+# Source the workspace
+source install/setup.bash
+
+# Generate point cloud only bag
+ros2 run generate_rosbag2 xyz <recorded_data_directory>
+
+# Generate complete dataset bag
+ros2 run generate_rosbag2 everything <recorded_data_directory>
+```
+
+### Examples
+
+```bash
+# Generate complete bag from recorded data
+ros2 run generate_rosbag2 everything 20230208-133746
+
+# Save bag to custom location
+ros2 run generate_rosbag2 everything 20230208-133746 ~/Downloads/my_bag
+```
+
+## Output
+
+The tool generates a ROS2 bag in the specified directory:
+
+```
+20230208-133746/
+    bag/
+        bag_0.db3  
+        metadata.yaml
+    disparity/
+        000000000.tiff
+        ...
+    details/
+        000000000.csv
+        ...
+```
+
+## Generated Topics
+
+### Point Cloud Topics
+- `/nodar/point_cloud` - Generated 3D point cloud data
+
+### Image Topics (with `everything` mode)
+- `/nodar/left/image_raw` - Raw left camera images
+- `/nodar/right/image_raw` - Raw right camera images  
+- `/nodar/left/image_rect` - Rectified left camera images
+
+## Features
+
+- Converts disparity data to 3D point clouds using standard stereo reconstruction
+- Preserves timestamps from original recording
+- Generates standard ROS2 message types
+- Configurable output location
+
+## Integration
+
+Generated bags can be used with standard ROS2 tools:
+
+```bash
+# Play back the generated bag
+ros2 bag play 20230208-133746/bag
+
+# View bag info
+ros2 bag info 20230208-133746/bag
+
+# View point clouds in rviz2
+ros2 run rviz2 rviz2
+```
+
+## Troubleshooting
+
+- **Missing disparity files**: Ensure Hammerhead recorded disparity data
+- **Invalid path**: Check that the recorded data directory exists and contains the expected structure
+- **Build errors**: Ensure all dependencies are installed and workspace is sourced
 

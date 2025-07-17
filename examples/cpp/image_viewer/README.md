@@ -1,50 +1,88 @@
-This example is a simple OpenCV viewer for ROS2 images published by hammerhead.
+# Image Viewer
 
-To build and run the example, you should be able to use either the traditional CMake process:
+Real-time OpenCV viewer for stereo images, disparity maps, and depth data published by Hammerhead via ROS2.
 
-    mkdir build
-    cd build/
-    cmake ..
-    make
-    ./image_viewer [image_topic]
+## Installation
 
-or the ROS2 process. In the latter case, you would place this directory in a ROS2 workspace's `src` folder
+This example is part of the hammerhead_ros2 workspace. Build it with:
 
-    hammerhead_ros2_ws/src/image_viewer/
-        CMakeLists.txt
-        image_viewer.cpp
-        package.xml
+```bash
+cd hammerhead_ros2
+colcon build --packages-select image_viewer
+```
 
-and then build and run this example from the root of the workspace:
+## Usage
 
-    cd hammerhead_ros2_ws
-    colcon build
-    . install/setup.bash
-    ros2 run image_viewer image_viewer [image_topic]
+```bash
+ros2 run image_viewer image_viewer <image_topic>
+```
 
-The parameter `image_topic` should be a ROS2 topic name that
-provides `sensor_msgs::msg::Image` messages. For example, some image topics published by hammerhead are
+### Parameters
 
-    /nodar/color_blended_depth/image_raw
-    /nodar/left/image_raw
-    /nodar/left/image_rect
-    /nodar/right/image_raw
-    /nodar/right/image_rect
+- `image_topic`: ROS2 topic name that provides `sensor_msgs::msg::Image` messages
 
-Hence, to view the raw images of the left camera, you could run either
+### Examples
 
-    ./image_viewer /nodar/left/image_raw
+```bash
+# Source the workspace
+source install/setup.bash
 
-or
+# View raw left camera
+ros2 run image_viewer image_viewer /nodar/left/image_raw
 
-    ros2 run image_viewer image_viewer /nodar/left/image_raw
+# View disparity map
+ros2 run image_viewer image_viewer /nodar/disparity
 
-depending on whether you are using the CMake or ROS2 build process.
+# View color-blended depth
+ros2 run image_viewer image_viewer /nodar/color_blended_depth/image_raw
+```
 
-Note that if hammerhead is not running, then you will not see anything in the viewer.
-`hammerhead` is the executable which is publishing images. This example (`image_viewer`) is simply a viewer that
-subscribes to those messages and displays them.
+## Available Image Topics
 
-Furthermore, note that there is nothing special about this viewer or the image topics published by hammerhead. You can
-also view these images in other tools like `rviz2` and `rqt`. 
+| Topic | Description |
+|-------|-------------|
+| `/nodar/left/image_raw` | Raw left camera |
+| `/nodar/right/image_raw` | Raw right camera |
+| `/nodar/left/image_rect` | Rectified left image |
+| `/nodar/right/image_rect` | Rectified right image |
+| `/nodar/disparity` | Disparity map |
+| `/nodar/color_blended_depth/image_raw` | Color-coded depth visualization |
+
+## Features
+
+- Support for all image topics (raw, rectified, disparity, depth)
+- Real-time display with OpenCV
+- ROS2 native implementation
+
+## Alternative Usage
+
+### Standalone CMake Build
+
+You can also build and run this example using standalone CMake:
+
+```bash
+mkdir build && cd build
+cmake .. && make
+./image_viewer /nodar/left/image_raw
+```
+
+### Integration with ROS2 Tools
+
+This viewer is compatible with standard ROS2 tools:
+
+```bash
+# View with rviz2
+ros2 run rviz2 rviz2
+
+# View with rqt
+ros2 run rqt_image_view rqt_image_view
+```
+
+## Troubleshooting
+
+- **No display appears**: Check that Hammerhead is running and publishing image topics
+- **Topic not found**: Verify the topic name using `ros2 topic list`
+- **Build errors**: Ensure all dependencies are installed and workspace is sourced
+
+Press `Ctrl+C` to exit the viewer. 
   

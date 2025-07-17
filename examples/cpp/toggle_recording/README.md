@@ -1,30 +1,120 @@
-# Introduction
+# Recording Toggle
 
-This example demonstrates how to stop/start the recording in realtime by using the ROS2 interface for
-hammerhead. Specifically, if the ROS2 interfaces are enabled in the `master_config.ini`, then
-hammerhead will run a service that allows you to stop/start the recording while hammerhead is running.
-This service is exposed on the topic
+Simple utility to start/stop Hammerhead recording via ROS2 service.
 
-    nodar/should_record
+## Overview
 
-and accepts the type `SetBool.srv` provided by the `std_srvs` package.
+This example demonstrates how to control Hammerhead's recording functionality in real-time using ROS2 services. When ROS2 interfaces are enabled in Hammerhead's configuration, a recording service becomes available for dynamic control during operation.
 
-## Quick Start
+## Installation
 
-Place this example in a ROS2 workspace. That is, your directory structure should look like
+This example is part of the hammerhead_ros2 workspace:
 
-    hammerhead_ros2_ws/
-        src/
-            toggle_recording/
+```bash
+cd hammerhead_ros2
+colcon build --packages-select toggle_recording
+```
 
-Then from the root of the workspace, build this example:
+## Usage
 
-    cd hammerhead_ros2_ws
-    colcon build
+### Prerequisites
 
-Finally, register the packages with ROS2, and then run the client, that is,
+Ensure ROS2 interfaces are enabled in Hammerhead's `master_config.ini`.
 
-    . install/setup.bash
-    ros2 run toggle_recording toggle_recording 
+### Basic Usage
 
-This will run an infinite loop which allows you to communicate with the hammerhead recording service.
+```bash
+# Source the workspace
+source install/setup.bash
+
+# Run the recording toggle client
+ros2 run toggle_recording toggle_recording
+```
+
+## Features
+
+- **Real-time Control**: Start/stop recording while Hammerhead is running
+- **Interactive Interface**: Command-line prompts for recording control
+- **Service-based**: Uses ROS2 services for reliable recording control
+- **Simple Operation**: Easy-to-use toggle functionality
+
+## Service Interface
+
+### Available Service
+- `/nodar/should_record` - Recording control service
+
+### Message Type
+Uses standard `std_srvs/SetBool.srv`:
+
+```cpp
+#include <std_srvs/srv/set_bool.hpp>
+
+// Example service call
+auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+request->data = true;  // Start recording
+// request->data = false; // Stop recording
+```
+
+## Interactive Control
+
+```bash
+ros2 run toggle_recording toggle_recording
+# Follow prompts to start/stop recording
+```
+
+## Integration
+
+### Command Line Services
+You can also use ROS2 command line tools:
+
+```bash
+# Start recording
+ros2 service call /nodar/should_record std_srvs/srv/SetBool "{data: true}"
+
+# Stop recording
+ros2 service call /nodar/should_record std_srvs/srv/SetBool "{data: false}"
+```
+
+### Custom Applications
+Integrate recording control into your applications:
+
+```cpp
+#include <rclcpp/rclcpp.hpp>
+#include <std_srvs/srv/set_bool.hpp>
+
+class RecordingController : public rclcpp::Node {
+public:
+    RecordingController() : Node("recording_controller") {
+        recording_client_ = create_client<std_srvs::srv::SetBool>("/nodar/should_record");
+    }
+    
+    void startRecording() {
+        auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+        request->data = true;
+        recording_client_->async_send_request(request);
+    }
+    
+    void stopRecording() {
+        auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
+        request->data = false;
+        recording_client_->async_send_request(request);
+    }
+    
+private:
+    rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr recording_client_;
+};
+```
+
+## Use Cases
+
+- **Remote Recording Control**: Start/stop recording from remote systems
+- **Automated Data Collection**: Integrate with data collection pipelines
+- **Event-triggered Recording**: Start recording based on specific conditions
+- **System Integration**: Control recording from higher-level applications
+
+## Troubleshooting
+
+- **Service not available**: Verify ROS2 interfaces are enabled in Hammerhead configuration
+- **No response**: Check that Hammerhead is running and accessible
+- **Recording not starting**: Verify Hammerhead has proper permissions and disk space
+- **Connection issues**: Ensure network connectivity to Hammerhead device

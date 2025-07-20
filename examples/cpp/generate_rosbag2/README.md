@@ -1,10 +1,13 @@
-# Generate ROS Bag
+# Generate ROS2 Bag
 
 Convert data recorded by Hammerhead into ROS2 bag format for analysis and replay.
 
-## Overview
+## Build
 
-This package provides tools to convert Hammerhead recorded data into standard ROS2 bag format, making it easy to analyze and replay stereo vision data.
+```bash
+cd hammerhead_ros2
+colcon build --packages-up-to generate_rosbag2
+```
 
 ## Available Tools
 
@@ -12,23 +15,12 @@ This package provides tools to convert Hammerhead recorded data into standard RO
 Generates a bag containing only `sensor_msgs/PointCloud2` messages with points containing `x,y,z` and `r,g,b` attributes.
 
 ### `everything` - Complete Dataset
-Generates a bag containing point clouds plus image data:
+Generates a bag containing the aforementioned point clouds as well as:
+
 - Raw left and right camera images
 - Rectified left camera image
-- Generated point cloud data
 
-## Installation
-
-This example is part of the hammerhead_ros2 workspace:
-
-```bash
-cd hammerhead_ros2
-colcon build --packages-select generate_rosbag2
-```
-
-## Usage
-
-### Prerequisites
+## Prerequisites
 
 You need data recorded by Hammerhead in the following format:
 
@@ -44,7 +36,7 @@ You need data recorded by Hammerhead in the following format:
         ...
 ```
 
-### Basic Usage
+## Usage
 
 ```bash
 # Source the workspace
@@ -91,34 +83,19 @@ The tool generates a ROS2 bag in the specified directory:
 
 ### Image Topics (with `everything` mode)
 - `/nodar/left/image_raw` - Raw left camera images
-- `/nodar/right/image_raw` - Raw right camera images  
+- `/nodar/right/image_raw` - Raw right camera images
 - `/nodar/left/image_rect` - Rectified left camera images
 
 ## Features
 
 - Converts disparity data to 3D point clouds using standard stereo reconstruction
-- Preserves timestamps from original recording
+- Preserves timestamps from the original recording
 - Generates standard ROS2 message types
 - Configurable output location
 
-## Integration
-
-Generated bags can be used with standard ROS2 tools:
-
-```bash
-# Play back the generated bag
-ros2 bag play 20230208-133746/bag
-
-# View bag info
-ros2 bag info 20230208-133746/bag
-
-# View point clouds in rviz2
-ros2 run rviz2 rviz2
-```
-
 ## Troubleshooting
 
-- **Missing disparity files**: Ensure Hammerhead recorded disparity data
+- **Memory issues**: Use `xyz` mode for large datasets to reduce memory usage
 - **Invalid path**: Check that the recorded data directory exists and contains the expected structure
 - **Build errors**: Ensure all dependencies are installed and workspace is sourced
 

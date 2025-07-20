@@ -1,10 +1,13 @@
-# Generate ROS Bag (Python)
+# Generate ROS2 Bag
 
-Convert data recorded by Hammerhead into ROS2 bag format for analysis and replay using Python.
+Convert data recorded by Hammerhead into ROS2 bag format for analysis and replay.
 
-## Overview
+## Build
 
-This package provides Python tools to convert Hammerhead recorded data into standard ROS2 bag format, making it easy to analyze and replay stereo vision data with Python-based processing pipelines.
+```bash
+cd hammerhead_ros2
+colcon build --packages-up-to generate_rosbag2_py
+```
 
 ## Available Tools
 
@@ -12,23 +15,12 @@ This package provides Python tools to convert Hammerhead recorded data into stan
 Generates a bag containing only `sensor_msgs/PointCloud2` messages with points containing `x,y,z` and `r,g,b` attributes.
 
 ### `everything` - Complete Dataset
-Generates a bag containing point clouds plus image data:
+Generates a bag containing the aforementioned point clouds as well as:
+
 - Raw left and right camera images
 - Rectified left camera image
-- Generated point cloud data
 
-## Installation
-
-This example is part of the hammerhead_ros2 workspace:
-
-```bash
-cd hammerhead_ros2
-colcon build --packages-select generate_rosbag2_py
-```
-
-## Usage
-
-### Prerequisites
+## Prerequisites
 
 You need data recorded by Hammerhead in the following format:
 
@@ -44,7 +36,7 @@ You need data recorded by Hammerhead in the following format:
         ...
 ```
 
-### Basic Usage
+## Usage
 
 ```bash
 # Source the workspace
@@ -91,63 +83,19 @@ The tool generates a ROS2 bag in the specified directory:
 
 ### Image Topics (with `everything` mode)
 - `/nodar/left/image_raw` - Raw left camera images
-- `/nodar/right/image_raw` - Raw right camera images  
+- `/nodar/right/image_raw` - Raw right camera images
 - `/nodar/left/image_rect` - Rectified left camera images
 
 ## Features
 
-- **Python Implementation**: Easy to modify and extend for custom processing
-- **Disparity Processing**: Converts disparity data to 3D point clouds using OpenCV
-- **Timestamp Preservation**: Maintains original timing information
-- **Standard Messages**: Generates standard ROS2 message types
-- **Flexible Output**: Configurable output location
-
-## Python Dependencies
-
-The tool uses standard Python libraries:
-- `numpy` - Numerical processing
-- `opencv-python` - Image processing and 3D reconstruction
-- `rclpy` - ROS2 Python client library
-- `sensor_msgs` - Standard ROS2 sensor message types
-
-## Integration
-
-Generated bags can be used with standard ROS2 tools:
-
-```bash
-# Play back the generated bag
-ros2 bag play 20230208-133746/bag
-
-# View bag info
-ros2 bag info 20230208-133746/bag
-
-# Process with Python
-python3 -c "
-import rosbag2_py
-from rclpy.serialization import deserialize_message
-from sensor_msgs.msg import PointCloud2
-# Custom processing code here
-"
-```
-
-## Custom Processing
-
-The Python implementation makes it easy to add custom processing:
-
-```python
-# Example: Add custom point cloud filtering
-def process_point_cloud(points):
-    # Custom filtering logic
-    filtered_points = points[points[:, 2] > 0.5]  # Remove close points
-    return filtered_points
-
-# Modify the xyz.py or everything.py files to include custom processing
-```
+- Converts disparity data to 3D point clouds using standard stereo reconstruction
+- Preserves timestamps from the original recording
+- Generates standard ROS2 message types
+- Configurable output location
 
 ## Troubleshooting
 
-- **Missing dependencies**: Install required Python packages: `pip install numpy opencv-python`
 - **Memory issues**: Use `xyz` mode for large datasets to reduce memory usage
-- **Invalid path**: Check that the recorded data directory exists and contains expected structure
-- **Build errors**: Ensure all Python dependencies are installed
+- **Invalid path**: Check that the recorded data directory exists and contains the expected structure
+- **Build errors**: Ensure all dependencies are installed and workspace is sourced
 

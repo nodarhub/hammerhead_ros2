@@ -2,7 +2,7 @@
 
 > A comprehensive ROS2 client library for interfacing with the Hammerhead stereo vision system
 
-[![License](LICENSE)](LICENSE)
+[![License](images/shark_license.png)](LICENSE)
 
 ## Table of Contents
 

@@ -16,7 +16,7 @@ This package is part of the hammerhead_ros2 workspace:
 
 ```bash
 cd hammerhead_ros2
-colcon build --packages-select hammerhead_msgs
+colcon build --packages-up-to hammerhead_msgs
 ```
 
 ## Usage

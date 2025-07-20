@@ -12,7 +12,7 @@ This example is part of the hammerhead_ros2 workspace:
 
 ```bash
 cd hammerhead_ros2
-colcon build --packages-select set_camera_params_py
+colcon build --packages-up-to set_camera_params_py
 ```
 
 ## Usage

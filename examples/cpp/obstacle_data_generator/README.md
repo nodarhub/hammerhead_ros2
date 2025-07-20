@@ -16,7 +16,7 @@ This example is part of the hammerhead_ros2 workspace:
 
 ```bash
 cd hammerhead_ros2
-colcon build --packages-select obstacle_data_generator
+colcon build --packages-up-to obstacle_data_generator
 ```
 
 ## Usage

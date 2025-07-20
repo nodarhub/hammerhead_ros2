@@ -14,7 +14,7 @@ This example is part of the hammerhead_ros2 workspace:
 
 ```bash
 cd hammerhead_ros2
-colcon build --packages-select point_cloud_generator
+colcon build --packages-up-to point_cloud_generator
 ```
 
 ## Usage

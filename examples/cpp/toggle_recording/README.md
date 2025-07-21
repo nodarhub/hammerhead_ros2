@@ -4,24 +4,22 @@ Simple utility to start/stop Hammerhead recording via ROS2 service.
 
 ## Overview
 
-This example demonstrates how to control Hammerhead's recording functionality in real-time using ROS2 services. When ROS2 interfaces are enabled in Hammerhead's configuration, a recording service becomes available for dynamic control during operation.
+This example demonstrates how to control Hammerhead's recording functionality in real-time using ROS2 services. 
+When ROS2 interfaces are enabled in Hammerhead's configuration, 
+a recording service becomes available for dynamic control during operation.
 
-## Installation
-
-This example is part of the hammerhead_ros2 workspace:
+## Build
 
 ```bash
 cd hammerhead_ros2
 colcon build --packages-up-to toggle_recording
 ```
 
-## Usage
-
-### Prerequisites
+## Prerequisites
 
 Ensure ROS2 interfaces are enabled in Hammerhead's `master_config.ini`.
 
-### Basic Usage
+## Usage
 
 ```bash
 # Source the workspace
@@ -40,70 +38,7 @@ ros2 run toggle_recording toggle_recording
 
 ## Service Interface
 
-### Available Service
-- `/nodar/should_record` - Recording control service
-
-### Message Type
-Uses standard `std_srvs/SetBool.srv`:
-
-```cpp
-#include <std_srvs/srv/set_bool.hpp>
-
-// Example service call
-auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-request->data = true;  // Start recording
-// request->data = false; // Stop recording
-```
-
-## Interactive Control
-
-```bash
-ros2 run toggle_recording toggle_recording
-# Follow prompts to start/stop recording
-```
-
-## Integration
-
-### Command Line Services
-You can also use ROS2 command line tools:
-
-```bash
-# Start recording
-ros2 service call /nodar/should_record std_srvs/srv/SetBool "{data: true}"
-
-# Stop recording
-ros2 service call /nodar/should_record std_srvs/srv/SetBool "{data: false}"
-```
-
-### Custom Applications
-Integrate recording control into your applications:
-
-```cpp
-#include <rclcpp/rclcpp.hpp>
-#include <std_srvs/srv/set_bool.hpp>
-
-class RecordingController : public rclcpp::Node {
-public:
-    RecordingController() : Node("recording_controller") {
-        recording_client_ = create_client<std_srvs::srv::SetBool>("/nodar/should_record");
-    }
-    
-    void startRecording() {
-        auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-        request->data = true;
-        recording_client_->async_send_request(request);
-    }
-    
-    void stopRecording() {
-        auto request = std::make_shared<std_srvs::srv::SetBool::Request>();
-        request->data = false;
-        recording_client_->async_send_request(request);
-    }
-    
-private:
-    rclcpp::Client<std_srvs::srv::SetBool>::SharedPtr recording_client_;
-};
-```
+The service uses the `/nodar/should_record` topic with standard `std_srvs/SetBool.srv` messages.
 
 ## Use Cases
 

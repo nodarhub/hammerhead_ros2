@@ -1,25 +1,23 @@
 # Point Cloud Generator
 
-Generate 3D point clouds from compressed PointCloudSoup messages published by Hammerhead.
+Generate Ros2 `PointCloud2` messages from the `PointCloudSoup` messages published by Hammerhead.
 
 ## Overview
 
-This example demonstrates how to subscribe to bandwidth-efficient `PointCloudSoup` messages and convert them to standard `sensor_msgs/PointCloud2` messages for visualization and processing.
+This example demonstrates how to subscribe to bandwidth-efficient `PointCloudSoup` messages
+and convert them to standard `sensor_msgs/PointCloud2` messages for visualization and processing.
+The point clouds that Hammerhead generates can overwhelm the network due to bandwidth requirements. 
+`PointCloudSoup` messages provide a compressed representation that can be losslessly reconstructed 
+into XYZRGB point clouds while using a fraction of the bandwidth.
 
-The point clouds that Hammerhead generates can overwhelm the network due to bandwidth requirements. `PointCloudSoup` messages provide a compressed representation that can be losslessly reconstructed into XYZRGB point clouds while using a fraction of the bandwidth.
-
-## Installation
-
-This example is part of the hammerhead_ros2 workspace:
+## Build
 
 ```bash
 cd hammerhead_ros2
 colcon build --packages-up-to point_cloud_generator
 ```
 
-## Usage
-
-### Prerequisites
+## Prerequisites
 
 Configure Hammerhead to publish `PointCloudSoup` messages by modifying `master_config.ini`:
 
@@ -27,7 +25,7 @@ Configure Hammerhead to publish `PointCloudSoup` messages by modifying `master_c
 publish_point_cloud_type = 5
 ```
 
-### Basic Usage
+## Usage
 
 ```bash
 # Source the workspace
@@ -52,19 +50,6 @@ ros2 run point_cloud_generator point_cloud_generator
 ### Published Topics
 - `/nodar/point_cloud` - Standard ROS2 point cloud messages (`sensor_msgs/PointCloud2`)
 
-## Visualization
-
-View the generated point clouds in rviz2:
-
-```bash
-# Launch rviz2
-ros2 run rviz2 rviz2
-
-# Add PointCloud2 display
-# Set topic to: /nodar/point_cloud
-# Set Reliability Policy to: Best Effort
-```
-
 ### Important rviz2 Configuration
 
 This example publishes point clouds with `ReliabilityPolicy.BEST_EFFORT` QoS policy. In rviz2:
@@ -77,7 +62,9 @@ This example publishes point clouds with `ReliabilityPolicy.BEST_EFFORT` QoS pol
 
 ### ROS2 DDS Configuration
 
-For optimal performance, configure network interface parameters:
+If you are having networking issues, 
+please refer to the [ROS2 DDS tuning guide](https://docs.ros.org/en/humble/How-To-Guides/DDS-tuning.html). 
+For example, you may want to modify the fragmentation settings: 
 
 ```bash
 # Adjust IP fragmentation settings
@@ -85,7 +72,6 @@ sudo sysctl net.ipv4.ipfrag_time=3
 sudo sysctl net.ipv4.ipfrag_high_thresh=536870912
 ```
 
-See the [ROS2 DDS tuning guide](https://docs.ros.org/en/rolling/How-To-Guides/DDS-tuning.html) for more details.
 
 ### Production Considerations
 

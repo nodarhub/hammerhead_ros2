@@ -12,6 +12,9 @@ colcon build --packages-up-to image_viewer_py
 ## Usage
 
 ```bash
+# Source the workspace
+source install/setup.bash
+
 ros2 run image_viewer_py image_viewer_py <image_topic>
 ```
 

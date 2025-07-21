@@ -1,6 +1,6 @@
 # Point Cloud Generator
 
-Generate Ros2 `PointCloud2` messages from the `PointCloudSoup` messages published by Hammerhead.
+Generate ROS2 `PointCloud2` messages from the `PointCloudSoup` messages published by Hammerhead.
 
 ## Overview
 

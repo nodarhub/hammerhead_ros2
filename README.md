@@ -144,7 +144,7 @@ Python examples provide easy-to-use scripts for common Hammerhead integration ta
 #### Data Generation Examples
 - **[Generate ROS Bag](examples/python/generate_rosbag2_py/README.md)** - Generate point cloud data and save to ROS2 bag files
 - **[Point Cloud Generator](examples/python/point_cloud_generator_py/README.md)** - Generate 3D point clouds from stereo data
-- **[Obstacle Data Recorder](examples/python/obstacle_data_recorder_py/README.md)** - Generate obstacle detection data
+- **[Obstacle Data Recorder](examples/python/obstacle_data_recorder_py/README.md)** - Record obstacle detection data
 
 #### Control Examples
 - **[Camera Parameter Control](examples/python/set_camera_params_py/README.md)** - Real-time camera parameter adjustment
@@ -160,7 +160,7 @@ High-performance C++ implementations for real-time applications and system integ
 #### Data Generation Examples
 - **[Generate ROS Bag](examples/cpp/generate_rosbag2/README.md)** - Generate point cloud data and save to ROS2 bag files
 - **[Point Cloud Generator](examples/cpp/point_cloud_generator/README.md)** - Generate 3D point clouds from stereo data
-- **[Obstacle Data Recorder](examples/cpp/obstacle_data_recorder/README.md)** - Generate obstacle detection data
+- **[Obstacle Data Recorder](examples/cpp/obstacle_data_recorder/README.md)** - Record obstacle detection data
 
 #### Control Examples
 - **[Camera Parameter Control](examples/cpp/set_camera_params/README.md)** - Real-time camera parameter adjustment

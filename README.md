@@ -131,7 +131,6 @@ Python examples provide easy-to-use scripts for common Hammerhead integration ta
 
 #### Control Examples
 - **[Camera Parameter Control](examples/python/set_camera_params_py/README.md)** - Real-time camera parameter adjustment
-- **[Recording Toggle](examples/python/toggle_recording_py/README.md)** - Simple utility to start/stop Hammerhead recording
 
 ### ⚡ C++ Examples
 
@@ -147,7 +146,6 @@ High-performance C++ implementations for real-time applications and system integ
 
 #### Control Examples
 - **[Camera Parameter Control](examples/cpp/set_camera_params/README.md)** - Real-time camera parameter adjustment
-- **[Recording Toggle](examples/cpp/toggle_recording/README.md)** - Simple utility to start/stop Hammerhead recording
 
 ### Common Integration Workflows
 

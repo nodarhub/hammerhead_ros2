@@ -68,22 +68,6 @@ ros2 run generate_rosbag2 generate_rosbag2
 ros2 run obstacle_data_recorder obstacle_data_recorder
 ```
 
-### Python Usage
-
-```bash
-# Python examples use the _py suffix
-source install/setup.bash
-
-# View live left raw image from Hammerhead
-ros2 run image_viewer_py image_viewer_py /nodar/left/image_raw
-
-# Generate point cloud data and save to rosbag
-ros2 run generate_rosbag2_py generate_rosbag2_py
-
-# Record obstacle detection data
-ros2 run obstacle_data_recorder_py obstacle_data_recorder_py
-```
-
 ### Build Scripts
 
 The convenience scripts `compile.sh` and `clean.sh` build and clean all the examples while making sure that all the

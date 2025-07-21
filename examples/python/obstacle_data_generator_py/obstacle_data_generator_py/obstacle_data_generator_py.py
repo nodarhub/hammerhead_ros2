@@ -17,9 +17,9 @@ def write_data(filename, obstacle_data):
         out.write("\n")
 
 
-class ObstacleDataGeneratorNode(Node):
+class ObstacleDataRecorderNode(Node):
     def __init__(self, output_dir):
-        super().__init__('obstacle_data_generator_node')
+        super().__init__('obstacle_data_recorder_node')
         self.logger = self.get_logger()
         self.output_dir = output_dir
         self.qos_profile = QoSProfile(
@@ -48,7 +48,7 @@ class ObstacleDataGeneratorNode(Node):
 
 
 def main():
-    print("Starting obstacle_data_generator_node")
+    print("Starting obstacle_data_recorder_node")
     rclpy.init()
 
     exec = rclpy.executors.MultiThreadedExecutor()
@@ -63,8 +63,8 @@ def main():
         gitignore.write("*\n")
         gitignore.write("!.gitignore\n")
 
-    obstacle_data_generator_node = ObstacleDataGeneratorNode(output_dir)
-    exec.add_node(obstacle_data_generator_node)
+    obstacle_data_recorder_node = ObstacleDataRecorderNode(output_dir)
+    exec.add_node(obstacle_data_recorder_node)
 
     exec.spin()
 

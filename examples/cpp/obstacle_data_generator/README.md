@@ -1,4 +1,4 @@
-# Obstacle Data Generator
+# Obstacle Data Recorder
 
 Subscribe to obstacle detection data from Hammerhead and save it to text files for analysis.
 
@@ -16,7 +16,7 @@ This example is part of the hammerhead_ros2 workspace:
 
 ```bash
 cd hammerhead_ros2
-colcon build --packages-up-to obstacle_data_generator
+colcon build --packages-up-to obstacle_data_recorder
 ```
 
 ## Usage
@@ -25,8 +25,8 @@ colcon build --packages-up-to obstacle_data_generator
 # Source the workspace
 source install/setup.bash
 
-# Run the obstacle data generator
-ros2 run obstacle_data_generator obstacle_data_generator
+# Run the obstacle data recorder
+ros2 run obstacle_data_recorder obstacle_data_recorder
 ```
 
 ## Features
@@ -43,7 +43,7 @@ ros2 run obstacle_data_generator obstacle_data_generator
 
 ## Output Format
 
-The generator creates an `obstacle_data` folder containing timestamped text files:
+The recorder creates an `obstacle_data` folder containing timestamped text files:
 
 ```
 obstacle_data/

@@ -66,7 +66,7 @@ ros2 run image_viewer image_viewer /nodar/left/image_raw
 ros2 run generate_rosbag2 generate_rosbag2
 
 # Record obstacle detection data
-ros2 run obstacle_data_generator obstacle_data_generator
+ros2 run obstacle_data_recorder obstacle_data_recorder
 ```
 
 ### Python Usage
@@ -82,7 +82,7 @@ ros2 run image_viewer_py image_viewer_py /nodar/left/image_raw
 ros2 run generate_rosbag2_py generate_rosbag2_py
 
 # Record obstacle detection data
-ros2 run obstacle_data_generator_py obstacle_data_generator_py
+ros2 run obstacle_data_recorder_py obstacle_data_recorder_py
 ```
 
 ### Build Scripts
@@ -144,7 +144,7 @@ Python examples provide easy-to-use scripts for common Hammerhead integration ta
 #### Data Generation Examples
 - **[Generate ROS Bag](examples/python/generate_rosbag2_py/README.md)** - Generate point cloud data and save to ROS2 bag files
 - **[Point Cloud Generator](examples/python/point_cloud_generator_py/README.md)** - Generate 3D point clouds from stereo data
-- **[Obstacle Data Generator](examples/python/obstacle_data_generator_py/README.md)** - Generate obstacle detection data
+- **[Obstacle Data Recorder](examples/python/obstacle_data_recorder_py/README.md)** - Generate obstacle detection data
 
 #### Control Examples
 - **[Camera Parameter Control](examples/python/set_camera_params_py/README.md)** - Real-time camera parameter adjustment
@@ -160,7 +160,7 @@ High-performance C++ implementations for real-time applications and system integ
 #### Data Generation Examples
 - **[Generate ROS Bag](examples/cpp/generate_rosbag2/README.md)** - Generate point cloud data and save to ROS2 bag files
 - **[Point Cloud Generator](examples/cpp/point_cloud_generator/README.md)** - Generate 3D point clouds from stereo data
-- **[Obstacle Data Generator](examples/cpp/obstacle_data_generator/README.md)** - Generate obstacle detection data
+- **[Obstacle Data Recorder](examples/cpp/obstacle_data_recorder/README.md)** - Generate obstacle detection data
 
 #### Control Examples
 - **[Camera Parameter Control](examples/cpp/set_camera_params/README.md)** - Real-time camera parameter adjustment
@@ -180,7 +180,7 @@ High-performance C++ implementations for real-time applications and system integ
 4. Integrate with navigation or mapping frameworks
 
 #### 🚗 Obstacle Detection Integration
-1. Use **Obstacle Data Generator** to understand data format
+1. Use **Obstacle Data Recorder** to understand data format
 2. Implement real-time processing of obstacle messages
 3. Integrate with path planning or control systems
 4. Add custom filtering or tracking algorithms

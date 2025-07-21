@@ -25,13 +25,13 @@ inline void write_data(const std::string& filename, const hammerhead_msgs::msg::
     out << std::endl;
 }
 
-class ObstacleDataGeneratorNode : public rclcpp::Node {
+class ObstacleDataRecorderNode : public rclcpp::Node {
 public:
     using ObstacleData = hammerhead_msgs::msg::ObstacleData;
     rclcpp::Logger logger;
 
-    ObstacleDataGeneratorNode(std::filesystem::path output_dir)
-        : Node("obstacle_data_generator_node"), logger(get_logger()), output_dir(output_dir) {
+    ObstacleDataRecorderNode(std::filesystem::path output_dir)
+        : Node("obstacle_data_recorder_node"), logger(get_logger()), output_dir(output_dir) {
         auto qos = rclcpp::QoS(rclcpp::QoSInitialization(qos_profile.history, qos_profile.depth), qos_profile);
         subscription = this->create_subscription<ObstacleData>(
             "nodar/obstacle_data", qos, [=](const ObstacleData::SharedPtr msg) { this->onNewMessage(msg); });
@@ -62,7 +62,7 @@ int main(int argc, char* argv[]) {
     signal(SIGINT, signalHandler);
     signal(SIGTERM, signalHandler);
 
-    std::cout << "Starting obstacle_data_generator_node" << std::endl;
+    std::cout << "Starting obstacle_data_recorder_node" << std::endl;
     rclcpp::init(argc, argv);
 
     rclcpp::executors::MultiThreadedExecutor exec;
@@ -71,8 +71,8 @@ int main(int argc, char* argv[]) {
     const auto output_dir{HERE / "obstacle_data"};
     std::filesystem::create_directories(output_dir);
 
-    auto obstacle_data_generator_node = std::make_shared<ObstacleDataGeneratorNode>(output_dir);
-    exec.add_node(obstacle_data_generator_node);
+    auto obstacle_data_recorder_node = std::make_shared<ObstacleDataRecorderNode>(output_dir);
+    exec.add_node(obstacle_data_recorder_node);
 
     exec.spin();
 

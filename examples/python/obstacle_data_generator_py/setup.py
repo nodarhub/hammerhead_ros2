@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'obstacle_data_generator_py'
+package_name = 'obstacle_data_recorder_py'
 
 setup(
     name=package_name,

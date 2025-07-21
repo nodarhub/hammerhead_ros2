@@ -1,4 +1,4 @@
-# Obstacle Data Generator (Python)
+# Obstacle Data Recorder (Python)
 
 Subscribe to obstacle detection data from Hammerhead and save it to text files for analysis using Python.
 
@@ -16,7 +16,7 @@ This example is part of the hammerhead_ros2 workspace:
 
 ```bash
 cd hammerhead_ros2
-colcon build --packages-up-to obstacle_data_generator_py
+colcon build --packages-up-to obstacle_data_recorder_py
 ```
 
 ## Usage
@@ -25,8 +25,8 @@ colcon build --packages-up-to obstacle_data_generator_py
 # Source the workspace
 source install/setup.bash
 
-# Run the obstacle data generator
-ros2 run obstacle_data_generator_py obstacle_data_generator_py
+# Run the obstacle data recorder
+ros2 run obstacle_data_recorder_py obstacle_data_recorder_py
 ```
 
 ## Features
@@ -44,7 +44,7 @@ ros2 run obstacle_data_generator_py obstacle_data_generator_py
 
 ## Output Format
 
-The generator creates an `obstacle_data` folder containing timestamped text files:
+The recorder creates an `obstacle_data` folder containing timestamped text files:
 
 ```
 obstacle_data/
@@ -126,7 +126,7 @@ def filter_obstacles(obstacles):
             filtered.append(obs)
     return filtered
 
-# Modify the obstacle_data_generator_py.py file to include custom processing
+# Modify the obstacle_data_recorder_py.py file to include custom processing
 ```
 
 ## Development Notes

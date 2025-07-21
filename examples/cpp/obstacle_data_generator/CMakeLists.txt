@@ -1,13 +1,13 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(obstacle_data_generator LANGUAGES CXX)
+project(obstacle_data_recorder LANGUAGES CXX)
 
 find_package(rclcpp REQUIRED)
 find_package(hammerhead_msgs CONFIG REQUIRED)
 
-add_executable(obstacle_data_generator obstacle_data_generator.cpp)
-ament_target_dependencies(obstacle_data_generator rclcpp hammerhead_msgs)
+add_executable(obstacle_data_recorder obstacle_data_recorder.cpp)
+ament_target_dependencies(obstacle_data_recorder rclcpp hammerhead_msgs)
 
-set_target_properties(obstacle_data_generator PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
-install(TARGETS obstacle_data_generator DESTINATION lib/${PROJECT_NAME})
+set_target_properties(obstacle_data_recorder PROPERTIES INSTALL_RPATH_USE_LINK_PATH TRUE)
+install(TARGETS obstacle_data_recorder DESTINATION lib/${PROJECT_NAME})
 ament_package()

@@ -93,7 +93,7 @@ request->param_value = 100.0;
 The following examples demonstrate how to use these custom message types:
 
 - **[Camera Parameter Control](../examples/cpp/set_camera_params/README.md)** - Service client for camera parameter adjustment
-- **[Obstacle Data Generator](../examples/cpp/obstacle_data_generator/README.md)** - Publisher for obstacle detection data
+- **[Obstacle Data Recorder](../examples/cpp/obstacle_data_recorder/README.md)** - Publisher for obstacle detection data
 - **[Python Camera Params](../examples/python/set_camera_params_py/README.md)** - Python service client example
 
 ## Message Definitions

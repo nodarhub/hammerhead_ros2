@@ -44,14 +44,12 @@ nav:
       - Obstacle Data Recorder: examples/python/obstacle_data_recorder_py.md
       - Point Cloud Generator: examples/python/point_cloud_generator_py.md
       - Camera Parameter Control: examples/python/set_camera_params_py.md
-      - Toggle Recording: examples/python/toggle_recording_py.md
   - C++ Examples:
       - Generate ROS2 Bag: examples/cpp/generate_rosbag2.md
       - Image Viewer: examples/cpp/image_viewer.md
       - Obstacle Data Recorder: examples/cpp/obstacle_data_recorder.md
       - Point Cloud Generator: examples/cpp/point_cloud_generator.md
       - Camera Parameter Control: examples/cpp/set_camera_params.md
-      - Toggle Recording: examples/cpp/toggle_recording.md
 
 
 markdown_extensions:

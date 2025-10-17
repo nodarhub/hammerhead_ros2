@@ -87,8 +87,8 @@ class PointCloudGeneratorNode(Node):
             self.logger.info("Nobody is subscribed nodar/point_cloud")
             return
 
-        self.logger.info("msg.disparity.encoding {msg.disparity.encoding}")
-        self.logger.info("msg.rectified.encoding {msg.rectified.encoding}")
+        self.logger.info(f"msg.disparity.encoding {msg.disparity.encoding}")
+        self.logger.info(f"msg.rectified.encoding {msg.rectified.encoding}")
         self.disparity = self.from_message(msg.disparity)
         if self.disparity is None:
             return

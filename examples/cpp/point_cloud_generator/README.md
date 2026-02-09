@@ -62,9 +62,12 @@ This example publishes point clouds with `ReliabilityPolicy.BEST_EFFORT` QoS pol
 
 ### ROS2 DDS Configuration
 
-If you are having networking issues, 
-please refer to the [ROS2 DDS tuning guide](https://docs.ros.org/en/humble/How-To-Guides/DDS-tuning.html). 
-For example, you may want to modify the fragmentation settings: 
+See the [DDS Transport Configuration](../../README.md#dds-transport-configuration) section in the main README for
+how to configure shared memory or tuned UDP transport.
+
+If you are having networking issues,
+please refer to the [ROS2 DDS tuning guide](https://docs.ros.org/en/humble/How-To-Guides/DDS-tuning.html).
+For example, you may want to modify the fragmentation settings:
 
 ```bash
 # Adjust IP fragmentation settings

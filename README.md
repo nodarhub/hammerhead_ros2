@@ -129,6 +129,9 @@ Python examples provide easy-to-use scripts for common Hammerhead integration ta
 - **[Point Cloud Generator](examples/python/point_cloud_generator_py/README.md)** - Generate 3D point clouds from stereo data
 - **[Obstacle Data Recorder](examples/python/obstacle_data_recorder_py/README.md)** - Record obstacle detection data
 
+#### Camera Source Examples
+- **[Topbot Publisher](examples/python/topbot_publisher_py/README.md)** - Publish stereo topbot images from disk to Hammerhead over ROS2
+
 #### Control Examples
 - **[Camera Parameter Control](examples/python/set_camera_params_py/README.md)** - Real-time camera parameter adjustment
 
@@ -143,6 +146,9 @@ High-performance C++ implementations for real-time applications and system integ
 - **[Generate ROS Bag](examples/cpp/generate_rosbag2/README.md)** - Generate point cloud data and save to ROS2 bag files
 - **[Point Cloud Generator](examples/cpp/point_cloud_generator/README.md)** - Generate 3D point clouds from stereo data
 - **[Obstacle Data Recorder](examples/cpp/obstacle_data_recorder/README.md)** - Record obstacle detection data
+
+#### Camera Source Examples
+- **[Topbot Publisher](examples/cpp/topbot_publisher/README.md)** - Publish stereo topbot images from disk to Hammerhead over ROS2
 
 #### Control Examples
 - **[Camera Parameter Control](examples/cpp/set_camera_params/README.md)** - Real-time camera parameter adjustment
@@ -267,6 +273,50 @@ private:
     rclcpp::Subscription<hammerhead_msgs::msg::ObstacleData>::SharedPtr subscription_;
 };
 ```
+
+## DDS Transport Configuration
+
+When publishing large images (e.g. full-resolution topbot stereo pairs), the default FastDDS transport can be a
+bottleneck. We provide XML profiles in `config/` to tune DDS for high-throughput image transfer.
+
+### Shared Memory (recommended for same-machine publisher/subscriber)
+
+Shared memory transport avoids serialization and network overhead entirely. This is the recommended configuration when
+the publisher and subscriber run on the same machine:
+
+```bash
+export FASTRTPS_DEFAULT_PROFILES_FILE=/path/to/hammerhead_ros2/config/fastdds_shm.xml
+```
+
+This configures a 256 MB shared memory segment with UDP as a fallback for discovery. You should see acquire times
+under 20ms for full-resolution stereo images.
+
+### UDP Only
+
+If you need to run the publisher and subscriber on different machines, or if shared memory is causing issues:
+
+```bash
+export FASTRTPS_DEFAULT_PROFILES_FILE=/path/to/hammerhead_ros2/config/fastdds_udp_only.xml
+```
+
+This configures UDP with 8 MB send/receive buffers. Expect higher latency than shared memory.
+
+### Default DDS Transport
+
+To use the built-in FastDDS defaults (SHM + UDP + loopback):
+
+```bash
+unset FASTRTPS_DEFAULT_PROFILES_FILE
+```
+
+### Important Notes
+
+- The environment variable must be set in **every terminal** that runs a ROS2 node (both publisher and subscriber).
+- The publisher and subscriber must use the **same transport** to communicate. If one side uses SHM and the other uses
+  UDP-only, they may not discover each other.
+- You can verify which transport is active by checking `ros2 doctor --report` or by observing the latency of image
+  transfer. With SHM on the same machine, acquire times should be well under 50ms. With UDP or default transport for
+  large images, you may see 300ms+ per frame.
 
 ## Best Practices & Tips
 

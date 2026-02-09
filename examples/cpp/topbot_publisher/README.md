@@ -62,9 +62,19 @@ ros2 run topbot_publisher topbot_publisher /path/to/topbot/data --encoding bayer
 
 ## Requirements
 
-- ROS2 with `rclpy`, `sensor_msgs`, and `cv_bridge`
-- OpenCV (`cv2`)
+- ROS2 with `rclcpp`, `sensor_msgs`, and `cv_bridge`
+- OpenCV (imgcodecs)
 - Directory should contain topbot image files in a supported format
+
+## Alternative Usage
+
+You can also build and run this example using standalone CMake:
+
+```bash
+mkdir build && cd build
+cmake .. && make
+./topbot_publisher /path/to/topbot/data
+```
 
 ## Troubleshooting
 

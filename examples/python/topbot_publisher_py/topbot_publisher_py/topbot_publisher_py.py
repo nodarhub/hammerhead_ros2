@@ -3,7 +3,7 @@
 Publish a folder of images on a ROS2 topic at a specified FPS.
 
 Usage:
-    ros2 run topbot_publisher topbot_publisher /path/to/images [--topic /nodar/topbots] [--fps 10] [--encoding auto]
+    ros2 run topbot_publisher_py topbot_publisher_py /path/to/images [--topic /nodar/topbots] [--fps 10] [--encoding auto]
 """
 
 import argparse

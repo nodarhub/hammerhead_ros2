@@ -1,6 +1,6 @@
 from setuptools import setup
 
-package_name = 'topbot_publisher'
+package_name = 'topbot_publisher_py'
 
 setup(
     name=package_name,

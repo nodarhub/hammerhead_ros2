@@ -7,14 +7,14 @@
     <maintainer email="support@nodarsensor.com">Nodar</maintainer>
     <license>NODAR Limited Copyright License</license>
 
-    <buildtool_depend>ament_python</buildtool_depend>
+    <buildtool_depend>ament_cmake</buildtool_depend>
 
-    <depend>rclpy</depend>
+    <depend>rclcpp</depend>
     <depend>sensor_msgs</depend>
     <depend>cv_bridge</depend>
     <depend>opencv2</depend>
 
     <export>
-        <build_type>ament_python</build_type>
+        <build_type>ament_cmake</build_type>
     </export>
 </package>

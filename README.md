@@ -358,6 +358,12 @@ net.core.rmem_max=8388608
 net.core.wmem_max=8388608
 ```
 
+Then apply immediately with:
+
+```bash
+sudo sysctl -p
+```
+
 Without this, the kernel silently caps the buffer size and large image transfers will be slow.
 
 ### Troubleshooting

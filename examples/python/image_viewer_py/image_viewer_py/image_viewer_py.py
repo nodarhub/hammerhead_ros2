@@ -1,4 +1,6 @@
 import sys
+import time
+from collections import deque
 
 import cv2
 import numpy as np
@@ -26,6 +28,8 @@ class Ros2ImageViewer(Node):
         cv2.namedWindow(topic, cv2.WINDOW_NORMAL)
         self.original_window_flag = cv2.getWindowProperty(topic, cv2.WND_PROP_VISIBLE)
         self.stop_command = False
+        self.frame_count = 0
+        self.timestamps = deque(maxlen=20)
 
     def from_message(self, msg):
         # Get the type
@@ -69,6 +73,15 @@ class Ros2ImageViewer(Node):
         if img is None:
             self.stop_command = True
             return
+
+        self.frame_count += 1
+        self.timestamps.append(time.monotonic())
+        if len(self.timestamps) >= 2:
+            elapsed = self.timestamps[-1] - self.timestamps[0]
+            fps = (len(self.timestamps) - 1) / elapsed
+            print(f"\rFrame # {self.frame_count}  {fps:.1f} fps", end="", flush=True)
+        else:
+            print(f"\rFrame # {self.frame_count}", end="", flush=True)
 
         # Downsize the image before viewing
         cv2.resizeWindow(self.topic, 640, 480)

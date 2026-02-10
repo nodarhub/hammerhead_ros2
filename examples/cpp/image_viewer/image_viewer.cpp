@@ -1,3 +1,6 @@
+#include <chrono>
+#include <deque>
+#include <iomanip>
 #include <iostream>
 #include <opencv2/highgui.hpp>
 #include <opencv2/imgproc.hpp>
@@ -76,6 +79,20 @@ private:
             return;
         }
 
+        ++frame_count_;
+        const auto now = std::chrono::steady_clock::now();
+        timestamps_.push_back(now);
+        if (timestamps_.size() > 20) {
+            timestamps_.pop_front();
+        }
+        if (timestamps_.size() >= 2) {
+            const double elapsed = std::chrono::duration<double>(timestamps_.back() - timestamps_.front()).count();
+            const double fps = (timestamps_.size() - 1) / elapsed;
+            std::cout << "\rFrame # " << frame_count_ << "  " << std::fixed << std::setprecision(1) << fps << " fps" << std::flush;
+        } else {
+            std::cout << "\rFrame # " << frame_count_ << std::flush;
+        }
+
         // Downsize the image before viewing
         cv::resizeWindow(topic, {640, 480});
         cv::imshow(topic, image);
@@ -88,6 +105,8 @@ private:
     std::string topic;
     int original_window_flag;
     std::promise<void> stop_promise;
+    uint64_t frame_count_ = 0;
+    std::deque<std::chrono::steady_clock::time_point> timestamps_;
 
 public:
     std::shared_future<void> stop_command;

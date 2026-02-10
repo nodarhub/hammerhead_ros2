@@ -45,6 +45,8 @@ ros2 run image_viewer image_viewer /nodar/disparity
 | `/nodar/right/image_rect` | Rectified right image |
 | `/nodar/disparity` | Disparity map |
 | `/nodar/color_blended_depth/image_raw` | Color-coded depth visualization |
+| `/nodar/topbots` | Raw topbot image (left is top-half, right is bottom-half) |
+| `/nodar/topbots_rect` | Rectified topbot image (left is top-half, right is bottom-half) |
 
 ## Features
 

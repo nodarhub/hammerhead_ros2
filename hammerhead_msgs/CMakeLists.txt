@@ -15,6 +15,12 @@ find_package(std_msgs REQUIRED)
 
 add_library(hammerhead_msg_lib INTERFACE)
 
+# ROS2 type support dispatch uses dlopen at runtime, so these MUST be shared libraries (.so).
+# The parent project may set BUILD_SHARED_LIBS=OFF, which makes rosidl produce static .a files
+# that dlopen can't load. Temporarily force SHARED for just the rosidl-generated targets.
+set(_saved_BUILD_SHARED_LIBS ${BUILD_SHARED_LIBS})
+set(BUILD_SHARED_LIBS ON)
+
 rosidl_generate_interfaces(
         hammerhead_msgs
         msg/Obstacle.msg
@@ -26,6 +32,8 @@ rosidl_generate_interfaces(
         std_msgs
         SKIP_INSTALL # This tells ros2 not to install anything. We will do it.
 )
+
+set(BUILD_SHARED_LIBS ${_saved_BUILD_SHARED_LIBS})
 
 add_dependencies(hammerhead_msg_lib hammerhead_msgs)
 if (TARGET hammerhead_msgs__rosidl_typesupport_cpp)

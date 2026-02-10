@@ -64,7 +64,7 @@ colcon build
 source install/setup.bash
 
 # Load the DDS transport config (see "DDS Transport Configuration" section below)
-export FASTRTPS_DEFAULT_PROFILES_FILE=$(pwd)/config/fastdds_shm.xml
+export FASTRTPS_DEFAULT_PROFILES_FILE=$(pwd)/config/fastdds.xml
 
 # View live left raw image from Hammerhead
 ros2 run image_viewer image_viewer /nodar/left/image_raw

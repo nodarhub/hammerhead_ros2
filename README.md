@@ -63,7 +63,10 @@ colcon build
 # Source the workspace
 source install/setup.bash
 
-# Load the DDS transport config (see "DDS Transport Configuration" section below)
+# IMPORTANT!: Load the DDS transport config 
+# See "DDS Transport Configuration" section below.
+# If you are seeing bad throughput over UDP, check your buffer sizes:
+#     sysctl net.core.rmem_max net.core.wmem_max
 export FASTRTPS_DEFAULT_PROFILES_FILE=$(pwd)/config/fastdds.xml
 
 # View live left raw image from Hammerhead

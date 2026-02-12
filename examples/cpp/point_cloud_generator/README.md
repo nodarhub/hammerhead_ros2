@@ -62,7 +62,7 @@ This example publishes point clouds with `ReliabilityPolicy.BEST_EFFORT` QoS pol
 
 ### ROS2 DDS Configuration
 
-See the [DDS Transport Configuration](../../README.md#dds-transport-configuration) section in the main README for
+See the [DDS Transport Configuration](../../../index.md#dds-transport-configuration) section in the main README for
 how to configure shared memory or tuned UDP transport.
 
 If you are having networking issues,

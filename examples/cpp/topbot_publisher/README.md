@@ -79,7 +79,7 @@ cmake .. && make
 ## DDS Transport
 
 For large images, the default DDS transport may be too slow. See the
-[DDS Transport Configuration](../../README.md#dds-transport-configuration) section in the main README for how to
+[DDS Transport Configuration](../../../index.md#dds-transport-configuration) section in the main README for how to
 configure shared memory or tuned UDP transport.
 
 ## Troubleshooting
@@ -87,7 +87,7 @@ configure shared memory or tuned UDP transport.
 - **Images not found**: Ensure the directory contains TIFF or PNG files
 - **Encoding errors**: Try specifying `--encoding` explicitly instead of `auto`
 - **Slow publish rate**: Large images may exceed the requested period. Check the
-  [DDS Transport Configuration](../../README.md#dds-transport-configuration) — switching to shared memory transport
+  [DDS Transport Configuration](../../../index.md#dds-transport-configuration) — switching to shared memory transport
   typically resolves this
 
 Press `Ctrl+C` to stop publishing.

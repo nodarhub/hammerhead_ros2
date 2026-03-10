@@ -114,6 +114,7 @@ Hammerhead publishes data using standard ROS2 message types over predefined topi
 | `/nodar/color_blended_depth/image_raw` | Color-coded depth visualization | `sensor_msgs/Image` |
 | `/nodar/topbot_raw`                    | Raw topbot image (left is top-half, right is bottom-half) | `sensor_msgs/Image` |
 | `/nodar/topbot_rect`                   | Rectified topbot image (left is top-half, right is bottom-half) | `sensor_msgs/Image` |
+| `/nodar/confidence_map`                | Confidence map                          | `sensor_msgs/Image` |
 
 ### 3D Data Topics
 

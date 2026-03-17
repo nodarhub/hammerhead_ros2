@@ -118,10 +118,12 @@ Hammerhead publishes data using standard ROS2 message types over predefined topi
 
 ### 3D Data Topics
 
-| Topic                | Description             | Message Type                   |
-|----------------------|-------------------------|--------------------------------|
-| `/nodar/point_cloud` | 3D point cloud data     | `sensor_msgs/PointCloud2`      |
-| `/nodar/obstacle`    | Obstacle detection data | `hammerhead_msgs/ObstacleData` |
+| Topic                      | Description                                      | Message Type                        |
+|----------------------------|--------------------------------------------------|-------------------------------------|
+| `/nodar/point_cloud`       | 3D point cloud data (XYZ)                        | `sensor_msgs/PointCloud2`           |
+| `/nodar/point_cloud_rgb`   | 3D point cloud data with RGB color               | `sensor_msgs/PointCloud2`           |
+| `/nodar/point_cloud_soup`  | Bandwidth-efficient point cloud representation   | `hammerhead_msgs/PointCloudSoup`    |
+| `/nodar/obstacle`          | Obstacle detection data                          | `hammerhead_msgs/ObstacleData`      |
 
 ### Control Topics
 
@@ -309,6 +311,26 @@ private:
     rclcpp::Subscription<hammerhead_msgs::msg::ObstacleData>::SharedPtr subscription_;
 };
 ```
+
+#### PointCloudSoup
+
+A bandwidth-efficient representation of point cloud data. Instead of transmitting a full `PointCloud2` message, the PointCloudSoup contains the rectified image, disparity map, and calibration parameters needed to reconstruct the point cloud on the subscriber side. This can use a fraction of the bandwidth compared to a full point cloud.
+
+To enable this topic, set `publish_point_cloud_type = 5` in the master configuration.
+
+**Message fields:**
+- `header` — Standard ROS2 header
+- `rectified` — Rectified left image (`sensor_msgs/Image`)
+- `disparity` — Disparity map in Q12.4 format (`sensor_msgs/Image`)
+- `baseline` — Stereo baseline distance
+- `focal_length` — Camera focal length
+- `disparity_to_depth4x4` — 4x4 reprojection matrix
+- `rotation_disparity_to_raw_cam` — 3x3 rotation from disparity frame to raw camera frame
+- `rotation_world_to_raw_cam` — 3x3 rotation from world frame to raw camera frame
+
+For complete examples that subscribe to PointCloudSoup and reconstruct a full `PointCloud2`, see:
+- **[Point Cloud Generator (C++)](examples/cpp/point_cloud_generator/README.md)**
+- **[Point Cloud Generator (Python)](examples/python/point_cloud_generator_py/README.md)**
 
 ## DDS Transport Configuration
 

@@ -66,11 +66,16 @@ class PointCloudGeneratorNode(Node):
             self.logger.error(f"Unknown image encoding `{msg.encoding}`")
             return None
 
-        img = np.frombuffer(msg.data, dtype=dtype)
+        # msg.step may be larger than width * bytes_per_pixel due to GPU memory alignment
+        # padding (e.g. from GpuMat). Reshape using step to include padding, then trim.
+        bytes_per_elem = np.dtype(dtype).itemsize
+        step_elems = msg.step // bytes_per_elem
+        img = np.frombuffer(msg.data, dtype=dtype).reshape(msg.height, step_elems)
         if channels != 1:
-            img = img.reshape(msg.height, msg.width, channels)
+            # step_elems includes padding; trim to actual pixel columns
+            img = img[:, :msg.width * channels].reshape(msg.height, msg.width, channels)
         else:
-            img = img.reshape(msg.height, msg.width)
+            img = img[:, :msg.width]
 
         # If the encoding is a Bayer pattern, convert to BGR
         if msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16":

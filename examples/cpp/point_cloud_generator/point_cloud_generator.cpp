@@ -14,7 +14,7 @@ void signalHandler(int signum) {
     std::exit(EXIT_FAILURE);
 }
 
-bool fromMessage(const sensor_msgs::msg::Image &msg, cv::Mat &img) {
+bool fromMessage(const sensor_msgs::msg::Image &msg, cv::Mat &img_buf, cv::Mat &img) {
     // Get the type
     int cv_type = -1;
     if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_rggb8" or msg.encoding == "mono8") {
@@ -34,17 +34,24 @@ bool fromMessage(const sensor_msgs::msg::Image &msg, cv::Mat &img) {
         return false;
     }
 
-    // Allocate space for the output
-    if (img.rows != msg.height or img.cols != msg.width or cv_type != img.type()) {
+    // msg.step is the row stride in bytes, which may be larger than width * elem_size due to
+    // GPU memory alignment padding (e.g. from GpuMat). Since cv::Mat doesn't allow manually
+    // setting the step on allocation, we store the raw bytes in img_buf (CV_8UC1 with msg.step
+    // columns = one byte per column, so the buffer exactly matches the source layout).
+    // We keep img_buf alive as a member so the underlying buffer is reused across frames.
+    if (img_buf.rows != (int)msg.height or img_buf.cols < (int)msg.step) {
         std::cout << "Cached image is the wrong size or type. "  //
                   << "Changing to " << msg.width << "x" << msg.height  //
                   << " with the type " << msg.encoding << std::endl;
-        img = cv::Mat(msg.height, msg.width, cv_type);
+        img_buf = cv::Mat(msg.height, msg.step, CV_8UC1);
     }
 
     // Copy in the message data
     const auto size = msg.height * msg.step;
-    std::copy(msg.data.data(), msg.data.data() + size, img.data);
+    std::copy(msg.data.data(), msg.data.data() + size, img_buf.data);
+
+    // Create a typed view with the correct width and step over the raw buffer
+    img = cv::Mat(msg.height, msg.width, cv_type, img_buf.data, msg.step);
 
     // If the encoding is a Bayer pattern, convert to BGR
     if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16") {
@@ -84,8 +91,8 @@ private:
         }
 
         // Retrieve OpenCV matrices from the message
-        if (not fromMessage(msg->disparity, disparity) or  //
-            not fromMessage(msg->rectified, rectified)) {
+        if (not fromMessage(msg->disparity, disparity_buf, disparity) or  //
+            not fromMessage(msg->rectified, rectified_buf, rectified)) {
             return;
         }
 
@@ -128,9 +135,7 @@ private:
         const auto rect_type = rectified.type();
         assert(rect_type == CV_8UC3 or rect_type == CV_8SC3 or rect_type == CV_16UC3 or rect_type == CV_16SC3);
 
-        auto xyz = reinterpret_cast<float *>(depth3d.data);
         const auto bgr_step = rect_type == CV_8UC3 or rect_type == CV_8SC3 ? 3 : 6;
-        auto bgr = rectified.data;
         const auto rows = disparity.rows;
         const auto cols = disparity.cols;
         size_t total = 0;
@@ -139,6 +144,8 @@ private:
         size_t num_points = 0;
         try {
             for (size_t row = 0; row < rows; ++row) {
+                auto xyz = reinterpret_cast<float *>(depth3d.ptr(row));
+                auto bgr = rectified.ptr(row);
                 for (size_t col = 0; col < cols; ++col, xyz += 3, bgr += bgr_step) {
                     ++total;
                     if (not isValid(xyz)) {
@@ -177,8 +184,8 @@ private:
     rmw_qos_profile_t qos_profile = rmw_qos_profile_sensor_data;
     rclcpp::Subscription<Msg>::SharedPtr subscription;
     rclcpp::Publisher<PointCloud>::SharedPtr point_cloud_publisher;
-    cv::Mat disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4, rotation_disparity_to_raw_cam,
-        rotation_world_to_raw_cam;
+    cv::Mat disparity_buf, rectified_buf, disparity, rectified, disparity_scaled, depth3d, disparity_to_depth4x4,
+        rotation_disparity_to_raw_cam, rotation_world_to_raw_cam;
 };
 
 int main(int argc, char *argv[]) {

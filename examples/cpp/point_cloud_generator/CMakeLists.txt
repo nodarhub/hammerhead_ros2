@@ -2,7 +2,9 @@ cmake_minimum_required(VERSION 3.10)
 
 project(point_cloud_generator LANGUAGES CXX)
 
-find_package(OpenCV 4 REQUIRED COMPONENTS calib3d imgproc)
+if (NOT (TARGET opencv_calib3d AND TARGET opencv_imgproc))
+    find_package(OpenCV 4 REQUIRED COMPONENTS calib3d imgproc)
+endif ()
 find_package(rclcpp REQUIRED)
 find_package(hammerhead_msgs CONFIG REQUIRED)
 

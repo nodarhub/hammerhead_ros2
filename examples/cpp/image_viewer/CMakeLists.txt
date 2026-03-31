@@ -4,7 +4,9 @@ project(image_viewer LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 14)
 
-find_package(OpenCV 4 REQUIRED COMPONENTS highgui imgproc)
+if (NOT (TARGET opencv_highgui AND TARGET opencv_imgproc))
+    find_package(OpenCV 4 REQUIRED COMPONENTS highgui imgproc)
+endif ()
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 

@@ -1,7 +1,16 @@
+import os
+import sys
+
 import cv2
 import numpy as np
-from sensor_msgs.msg import PointCloud2, PointField
 from builtin_interfaces.msg import Time
+from sensor_msgs.msg import PointCloud2, PointField
+
+try:
+    from reproject_to_3d import reproject_image_to_3d
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from reproject_to_3d import reproject_image_to_3d
 
 
 def to_point_cloud_msg(details_parameters,
@@ -9,28 +18,14 @@ def to_point_cloud_msg(details_parameters,
                        rectified,
                        timestamp):
     disparity_scaled = disparity.astype(np.float32) / 16.0
-    q_matrix = details_parameters.disparity_to_depth4x4.copy()
-    q_with_reverse_t_vec_convention = True
-    rotation_disparity_to_world = (
+    rotation_matrix = (
         details_parameters.rotation_world_to_raw_cam.T
         @ details_parameters.rotation_disparity_to_raw_cam
     )
-
-    # Pinhole (rectilinear) projection via Q matrix
-    if details_parameters.projection_type != 0:
-        print(
-            f"Unsupported projection type {details_parameters.projection_type}, expected 0 for pinhole. "
-            "Continue with pinhole projection anyway."
-        )
-    # Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
-    rotation_disparity_to_world_4x4 = np.eye(4, dtype=np.float32)
-    rotation_disparity_to_world_4x4[:3, :3] = rotation_disparity_to_world
-    disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 @ q_matrix
-    if q_with_reverse_t_vec_convention:
-        # Negate the last row of the Q-matrix
-        disparity_to_rotated_depth4x4[3, :] *= -1
-    # Reproject to 3D
-    xyz = cv2.reprojectImageTo3D(disparity_scaled, disparity_to_rotated_depth4x4)
+    xyz = reproject_image_to_3d(
+        disparity_scaled, details_parameters.projection_type,
+        details_parameters.disparity_to_depth4x4, rotation_matrix
+    )
     bgr = rectified
 
     x = xyz[:, :, 0]

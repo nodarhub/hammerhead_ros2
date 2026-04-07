@@ -10,32 +10,17 @@
 
 #include "generate_rosbag2/details_parameters.hpp"
 #include "generate_rosbag2/point_filter.hpp"
+#include "generate_rosbag2/reproject_to_3d.hpp"
 
 inline auto toPointCloud2Msg(DetailsParameters &details, const cv::Mat &disparity, const cv::Mat &left_rect) {
     // Convert the disparity map to a point cloud
     cv::Mat point_cloud;
 
-    constexpr bool q_with_reverse_t_vec_convention = true;
     cv::Mat disparity_to_depth4x4{cv::Size{4, 4}, CV_32FC1, details.projection.data()};
     cv::Mat rotation_disparity_to_raw_cam{cv::Size{3, 3}, CV_32FC1, details.rotationDisparityToRawCam.data()};
     cv::Mat rotation_world_to_raw_cam{cv::Size{3, 3}, CV_32FC1, details.rotationWorldToRawCam.data()};
-
-    if (details.projectionType != 0) {
-        std::warning << "Unsupported projection type " << details.projectionType << ", expected 0 for pinhole. "
-                     << "Continue with pinhole projection anyway." << std::endl;
-    }
-
-    // Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
-    cv::Mat1f rotation_disparity_to_world_4x4 = cv::Mat::eye(4, 4, CV_32F);
-    cv::Mat(rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam)
-        .convertTo(rotation_disparity_to_world_4x4(cv::Rect(0, 0, 3, 3)), CV_32F);
-    cv::Mat disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 * disparity_to_depth4x4;
-    if (q_with_reverse_t_vec_convention) {
-        // Negate the last row of the Q-matrix
-        disparity_to_rotated_depth4x4.row(3) = -disparity_to_rotated_depth4x4.row(3);
-    }
-
-    cv::reprojectImageTo3D(disparity, point_cloud, disparity_to_rotated_depth4x4);
+    const cv::Mat rotation_matrix = rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam;
+    nodar::reprojectImageTo3D(point_cloud, details.projectionType, disparity, disparity_to_depth4x4, rotation_matrix);
 
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;

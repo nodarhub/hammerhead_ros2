@@ -27,6 +27,7 @@ class PointCloudGeneratorNode(Node):
             'nodar/point_cloud',
             qos_profile
         )
+        self.projection_type = 0  # 0 = pinhole, 1 = cylindrical
         self.disparity_to_depth4x4 = np.eye(4, dtype=np.float32)
         self.rotation_disparity_to_raw_cam = np.eye(3, dtype=np.float32)
         self.rotation_world_to_raw_cam = np.eye(3, dtype=np.float32)
@@ -101,24 +102,33 @@ class PointCloudGeneratorNode(Node):
         if self.rectified is None:
             return
 
+        self.projection_type = msg.projection_type  # 0 = pinhole, 1 = cylindrical
+        q_with_reverse_t_vec_convention = True
         self.disparity_to_depth4x4 = np.array(msg.disparity_to_depth4x4.data).reshape(4, 4)
         self.rotation_disparity_to_raw_cam = np.array(msg.rotation_disparity_to_raw_cam.data).reshape(3, 3)
         self.rotation_world_to_raw_cam = np.array(msg.rotation_world_to_raw_cam.data).reshape(3, 3)
-        # Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
+        self.logger.info(
+            "Details:\n"
+            + f"\tfocal_length    : {msg.focal_length}\n"
+            + f"\tbaseline        : {msg.baseline}\n"
+            + f"\tprojection_type : {self.projection_type}\n"
+        )
+
         rotation_disparity_to_world = self.rotation_world_to_raw_cam.T @ self.rotation_disparity_to_raw_cam
+        disparity_scaled = self.disparity / np.float32(16)
+
+        # Pinhole (rectilinear) projection via Q matrix
+        if self.projection_type != 0:
+            self.logger.warn(
+                f"Unsupported projection type {self.projection_type}, expected 0 for pinhole. "
+                "Continue with pinhole projection anyway."
+            )
         rotation_disparity_to_world_4x4 = np.eye(4, dtype=np.float32)
         rotation_disparity_to_world_4x4[:3, :3] = rotation_disparity_to_world
         disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 @ self.disparity_to_depth4x4
-
-        # Negate the last row of the Q-matrix
-        disparity_to_rotated_depth4x4[3, :] *= -1
-
-        self.logger.info("Details:\n" +
-                         f"\tfocal_length : {msg.focal_length}\n" +
-                         f"\tbaseline     : {msg.baseline}\n"
-                         )
-
-        disparity_scaled = self.disparity / np.float32(16)
+        if q_with_reverse_t_vec_convention:
+            # Negate the last row of the Q-matrix
+            disparity_to_rotated_depth4x4[3, :] *= -1
         if self.depth3d is None:
             self.depth3d = cv2.reprojectImageTo3D(disparity_scaled, disparity_to_rotated_depth4x4)
         else:

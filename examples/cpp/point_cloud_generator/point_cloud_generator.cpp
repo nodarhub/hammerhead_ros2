@@ -119,7 +119,7 @@ private:
         sensor_msgs::PointCloud2Iterator<uint8_t> g(point_cloud, "g");
         sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
 
-        // Disparity is in 11.6 format
+        // Disparity is in 12.4 format
         disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
         const cv::Mat rotation_matrix = rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam;
         nodar::reprojectImageTo3D(depth3d, msg->projection_type, disparity_scaled, disparity_to_depth4x4, rotation_matrix);

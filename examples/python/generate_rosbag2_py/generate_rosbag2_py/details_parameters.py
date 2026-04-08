@@ -9,6 +9,8 @@ class DetailsParameters:
 
         self.left_time = int(data["left_time"])
         self.right_time = int(data["right_time"])
+        self.exposure = float(data.get("exposure", 0.0))
+        self.gain = float(data.get("gain", 0.0))
         self.focal_length = float(data["focal_length"])
         self.baseline = float(data["baseline"])
         self.meters_above_ground = float(data["meters_above_ground"])
@@ -30,6 +32,8 @@ class DetailsParameters:
             "Details:\n"
             f"\tleft_time               : {self.left_time}\n"
             f"\tright_time              : {self.right_time}\n"
+            f"\texposure                : {self.exposure:.6f}\n"
+            f"\tgain                    : {self.gain:.6f}\n"
             f"\tfocal_length            : {self.focal_length:.6f}\n"
             f"\tbaseline                : {self.baseline:.6f}\n"
             f"\tmeters_above_ground     : {self.meters_above_ground:.6f}\n"

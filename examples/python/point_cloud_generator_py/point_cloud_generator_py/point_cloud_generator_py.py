@@ -123,7 +123,7 @@ class PointCloudGeneratorNode(Node):
         rotation_matrix = self.rotation_world_to_raw_cam.T @ self.rotation_disparity_to_raw_cam
         self.depth3d = reproject_image_to_3d(
             disparity_scaled, self.projection_type, self.disparity_to_depth4x4, rotation_matrix,
-            dst=self.depth3d
+            msg.focal_length, True, dst=self.depth3d
         )
 
         xyz = self.depth3d

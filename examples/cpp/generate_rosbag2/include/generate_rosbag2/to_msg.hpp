@@ -20,7 +20,8 @@ inline auto toPointCloud2Msg(DetailsParameters &details, const cv::Mat &disparit
     cv::Mat rotation_disparity_to_raw_cam{cv::Size{3, 3}, CV_32FC1, details.rotationDisparityToRawCam.data()};
     cv::Mat rotation_world_to_raw_cam{cv::Size{3, 3}, CV_32FC1, details.rotationWorldToRawCam.data()};
     const cv::Mat rotation_matrix = rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam;
-    nodar::reprojectImageTo3D(point_cloud, details.projectionType, disparity, disparity_to_depth4x4, rotation_matrix);
+    nodar::reprojectImageTo3D(point_cloud, details.projectionType, disparity, disparity_to_depth4x4, rotation_matrix,
+                              details.focalLength, true);
 
     // Create the point cloud message and a modifier to iterate over it
     sensor_msgs::msg::PointCloud2 point_cloud_msg;

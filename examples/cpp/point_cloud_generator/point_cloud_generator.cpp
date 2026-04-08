@@ -122,7 +122,8 @@ private:
         // Disparity is in 11.6 format
         disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
         const cv::Mat rotation_matrix = rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam;
-        nodar::reprojectImageTo3D(depth3d, msg->projection_type, disparity_scaled, disparity_to_depth4x4, rotation_matrix);
+        nodar::reprojectImageTo3D(depth3d, msg->projection_type, disparity_scaled, disparity_to_depth4x4,
+                                  rotation_matrix, msg->focal_length, true);
 
         // Assert types before continuing
         assert(depth3d.type() == CV_32FC3);

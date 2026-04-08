@@ -24,7 +24,8 @@ def to_point_cloud_msg(details_parameters,
     )
     xyz = reproject_image_to_3d(
         disparity_scaled, details_parameters.projection_type,
-        details_parameters.disparity_to_depth4x4, rotation_matrix
+        details_parameters.disparity_to_depth4x4, rotation_matrix,
+        details_parameters.focal_length, True
     )
     bgr = rectified
 

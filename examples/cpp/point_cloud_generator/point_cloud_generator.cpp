@@ -8,6 +8,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include "hammerhead_msgs/msg/point_cloud_soup.hpp"
+#include "reproject_to_3d.hpp"
 
 void signalHandler(int signum) {
     std::cerr << "SIGINT or SIGTERM received." << std::endl;
@@ -102,14 +103,6 @@ private:
                   rotation_disparity_to_raw_cam.begin<float>());
         std::copy(msg->rotation_world_to_raw_cam.begin(), msg->rotation_world_to_raw_cam.end(),
                   rotation_world_to_raw_cam.begin<float>());
-        // Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
-        cv::Mat1f rotation_disparity_to_world_4x4 = cv::Mat::eye(4, 4, CV_32F);
-        cv::Mat(rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam)
-            .convertTo(rotation_disparity_to_world_4x4(cv::Rect(0, 0, 3, 3)), CV_32F);
-        cv::Mat disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 * disparity_to_depth4x4;
-
-        // Negate the last row of the Q-matrix
-        disparity_to_rotated_depth4x4.row(3) = -disparity_to_rotated_depth4x4.row(3);
 
         // Construct the point cloud
         PointCloud point_cloud;
@@ -126,9 +119,10 @@ private:
         sensor_msgs::PointCloud2Iterator<uint8_t> g(point_cloud, "g");
         sensor_msgs::PointCloud2Iterator<uint8_t> b(point_cloud, "b");
 
-        // Disparity is in 11.6 format
+        // Disparity is in 12.4 format
         disparity.convertTo(disparity_scaled, CV_32F, 1. / 16);
-        cv::reprojectImageTo3D(disparity_scaled, depth3d, disparity_to_rotated_depth4x4);
+        const cv::Mat rotation_matrix = rotation_world_to_raw_cam.t() * rotation_disparity_to_raw_cam;
+        nodar::reprojectImageTo3D(depth3d, msg->projection_type, disparity_scaled, disparity_to_depth4x4, rotation_matrix);
 
         // Assert types before continuing
         assert(depth3d.type() == CV_32FC3);

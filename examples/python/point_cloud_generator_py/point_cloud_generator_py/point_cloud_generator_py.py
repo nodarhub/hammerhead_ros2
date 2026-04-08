@@ -1,3 +1,6 @@
+import os
+import sys
+
 import cv2
 import numpy as np
 import rclpy
@@ -5,6 +8,12 @@ from hammerhead_msgs.msg import PointCloudSoup
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
 from sensor_msgs.msg import PointCloud2, PointField
+
+try:
+    from reproject_to_3d import reproject_image_to_3d
+except ImportError:
+    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    from reproject_to_3d import reproject_image_to_3d
 
 
 class PointCloudGeneratorNode(Node):
@@ -27,6 +36,7 @@ class PointCloudGeneratorNode(Node):
             'nodar/point_cloud',
             qos_profile
         )
+        self.projection_type = 0  # 0 = pinhole, 1 = cylindrical
         self.disparity_to_depth4x4 = np.eye(4, dtype=np.float32)
         self.rotation_disparity_to_raw_cam = np.eye(3, dtype=np.float32)
         self.rotation_world_to_raw_cam = np.eye(3, dtype=np.float32)
@@ -101,28 +111,23 @@ class PointCloudGeneratorNode(Node):
         if self.rectified is None:
             return
 
+        self.projection_type = msg.projection_type  # 0 = pinhole, 1 = cylindrical
         self.disparity_to_depth4x4 = np.array(msg.disparity_to_depth4x4.data).reshape(4, 4)
         self.rotation_disparity_to_raw_cam = np.array(msg.rotation_disparity_to_raw_cam.data).reshape(3, 3)
         self.rotation_world_to_raw_cam = np.array(msg.rotation_world_to_raw_cam.data).reshape(3, 3)
-        # Compute disparity_to_rotated_depth4x4 (rotated Q matrix)
-        rotation_disparity_to_world = self.rotation_world_to_raw_cam.T @ self.rotation_disparity_to_raw_cam
-        rotation_disparity_to_world_4x4 = np.eye(4, dtype=np.float32)
-        rotation_disparity_to_world_4x4[:3, :3] = rotation_disparity_to_world
-        disparity_to_rotated_depth4x4 = rotation_disparity_to_world_4x4 @ self.disparity_to_depth4x4
-
-        # Negate the last row of the Q-matrix
-        disparity_to_rotated_depth4x4[3, :] *= -1
-
-        self.logger.info("Details:\n" +
-                         f"\tfocal_length : {msg.focal_length}\n" +
-                         f"\tbaseline     : {msg.baseline}\n"
-                         )
+        self.logger.info(
+            "Details:\n"
+            + f"\tfocal_length    : {msg.focal_length}\n"
+            + f"\tbaseline        : {msg.baseline}\n"
+            + f"\tprojection_type : {self.projection_type}\n"
+        )
 
         disparity_scaled = self.disparity / np.float32(16)
-        if self.depth3d is None:
-            self.depth3d = cv2.reprojectImageTo3D(disparity_scaled, disparity_to_rotated_depth4x4)
-        else:
-            cv2.reprojectImageTo3D(disparity_scaled, disparity_to_rotated_depth4x4, self.depth3d)
+        rotation_matrix = self.rotation_world_to_raw_cam.T @ self.rotation_disparity_to_raw_cam
+        self.depth3d = reproject_image_to_3d(
+            disparity_scaled, self.projection_type, self.disparity_to_depth4x4, rotation_matrix,
+            dst=self.depth3d
+        )
 
         xyz = self.depth3d
         bgr = self.rectified

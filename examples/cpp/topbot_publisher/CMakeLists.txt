@@ -4,7 +4,9 @@ project(topbot_publisher LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 
-find_package(OpenCV 4 REQUIRED COMPONENTS imgcodecs)
+if (NOT TARGET opencv_imgcodecs)
+    find_package(OpenCV 4 REQUIRED COMPONENTS imgcodecs)
+endif ()
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(cv_bridge REQUIRED)

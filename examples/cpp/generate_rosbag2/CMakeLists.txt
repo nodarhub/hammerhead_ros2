@@ -10,7 +10,9 @@ add_subdirectory(
 )
 
 
-find_package(OpenCV 4 REQUIRED COMPONENTS calib3d imgcodecs)
+if (NOT (TARGET opencv_calib3d AND TARGET opencv_imgcodecs))
+    find_package(OpenCV 4 REQUIRED COMPONENTS calib3d imgcodecs)
+endif ()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosbag2_cpp REQUIRED)

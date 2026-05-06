@@ -87,10 +87,10 @@ class PointCloudGeneratorNode(Node):
         # If the encoding is a Bayer pattern, convert to BGR
         if msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16":
             self.logger.info("Converting Bayer to BGR")
-            img = cv2.cvtColor(img, cv2.COLOR_BayerRG2BGR)
+            img = cv2.cvtColor(img, cv2.COLOR_BayerBGGR2BGR)
         elif msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16":
             self.logger.info("Converting Bayer to BGR")
-            img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
+            img = cv2.cvtColor(img, cv2.COLOR_BayerRGGB2BGR)
         return img
 
     def on_new_message(self, msg):

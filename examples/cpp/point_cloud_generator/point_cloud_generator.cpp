@@ -55,9 +55,9 @@ bool fromMessage(const sensor_msgs::msg::Image &msg, cv::Mat &img_buf, cv::Mat &
 
     // If the encoding is a Bayer pattern, convert to BGR
     if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16") {
-        cv::cvtColor(img, img, cv::COLOR_BayerBGGR2BGR);
+        cv::cvtColor(img, img, cv::COLOR_BayerRG2BGR);
     } else if (msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16") {
-        cv::cvtColor(img, img, cv::COLOR_BayerRGGB2BGR);
+        cv::cvtColor(img, img, cv::COLOR_BayerBG2BGR);
     }
     return true;
 }

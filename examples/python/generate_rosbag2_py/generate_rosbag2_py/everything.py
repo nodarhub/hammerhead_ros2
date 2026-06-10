@@ -28,7 +28,6 @@ def main():
 
     disparity_dir = os.path.join(input_dir, "disparity")
     depth_dir = os.path.join(input_dir, "depth")
-    depth_colormap_dir = os.path.join(input_dir, "depth-colormap")  # Optional
     occupancy_map_dir = os.path.join(input_dir, "occupancy-map")  # Optional
     details_dir = os.path.join(input_dir, "details")
     left_rect_dir = os.path.join(input_dir, "left-rect")
@@ -49,7 +48,6 @@ def main():
         {"name": "nodar/right/image_raw", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/left/image_rect", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/disparity/image_raw", "type": "sensor_msgs/msg/Image"},
-        {"name": "nodar/color_blended_depth/image_raw", "type": "sensor_msgs/msg/Image"},
         {"name": "nodar/occupancy_map/image_raw", "type": "sensor_msgs/msg/Image"},
     ]
 
@@ -96,14 +94,6 @@ def main():
         bag_writer.write("nodar/right/image_raw", to_image_msg(bridge, right_raw, details.right_time))
         bag_writer.write("nodar/left/image_rect", to_image_msg(bridge, left_rect, details.left_time))
         bag_writer.write("nodar/disparity/image_raw", to_image_msg(bridge, disparity_image, details.left_time))
-        # Optional depth colormap
-        colormap_file = os.path.join(depth_colormap_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
-
-        if os.path.exists(colormap_file):
-            depth_colormap = cv2.imread(colormap_file, cv2.IMREAD_COLOR)
-            if depth_colormap is not None:
-                bag_writer.write("nodar/color_blended_depth/image_raw",
-                                 to_image_msg(bridge, depth_colormap, details.left_time))
         # Optional occupancy map
         occupancy_map_file = os.path.join(occupancy_map_dir, os.path.splitext(os.path.basename(disparity))[0] + ".tiff")
 

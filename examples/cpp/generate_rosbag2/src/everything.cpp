@@ -23,7 +23,6 @@ int main(int argc, char *argv[]) {
     // Directories that we read
     const auto disparity_dir = input_dir / "disparity";
     const auto depth_dir = input_dir / "depth";  // Possible alternative
-    const auto depth_colormap_dir = input_dir / "depth-colormap";  // Optional
     const auto occupancy_map_dir = input_dir / "occupancy-map";  // Optional
     const auto details_dir = input_dir / "details";
     const auto left_rect_dir = input_dir / "left-rect";
@@ -53,7 +52,6 @@ int main(int argc, char *argv[]) {
         {"nodar/right/image_raw", "sensor_msgs/msg/Image"},
         {"nodar/left/image_rect", "sensor_msgs/msg/Image"},
         {"nodar/disparity/image_raw", "sensor_msgs/msg/Image"},
-        {"nodar/color_blended_depth/image_raw", "sensor_msgs/msg/Image"},
         {"nodar/occupancy_map/image_raw", "sensor_msgs/msg/Image"},
     }};
 
@@ -125,14 +123,6 @@ int main(int argc, char *argv[]) {
         bag_writer.write("nodar/right/image_raw", toImageMsg(right_raw, details.rightTime));
         bag_writer.write("nodar/left/image_rect", toImageMsg(left_rect, details.leftTime));
         bag_writer.write("nodar/disparity/image_raw", toImageMsg(disparity_image, details.leftTime));
-        // Optional depth colormap
-        const auto colormap_file = depth_colormap_dir / (disparity.stem().string() + ".tiff");
-        if (std::filesystem::exists(colormap_file)) {
-            const auto depth_colormap = safeLoad(colormap_file, cv::IMREAD_COLOR, CV_8UC3, disparity, "depth colormap");
-            if (!depth_colormap.empty()) {
-                bag_writer.write("nodar/color_blended_depth/image_raw", toImageMsg(depth_colormap, details.leftTime));
-            }
-        }
         // Optional occupancy maps
         const auto occupancy_map_file = occupancy_map_dir / (disparity.stem().string() + ".tiff");
         if (std::filesystem::exists(occupancy_map_file)) {

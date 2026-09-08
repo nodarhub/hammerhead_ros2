@@ -33,17 +33,17 @@ class Ros2ImageViewer(Node):
 
     def from_message(self, msg):
         # Get the type
-        if msg.encoding == 'bayer_bggr8' or msg.encoding == 'bayer_rggb8' or msg.encoding == 'mono8':
+        if msg.encoding in ('bayer_bggr8', 'bayer_rggb8', 'bayer_gbrg8', 'bayer_grbg8', 'mono8'):
             channels, dtype = 1, np.uint8
-        elif msg.encoding == 'bgr8':
+        elif msg.encoding in ('bgr8', 'rgb8'):
             channels, dtype = 3, np.uint8
-        elif msg.encoding == 'bgra8':
+        elif msg.encoding in ('bgra8', 'rgba8'):
             channels, dtype = 4, np.uint8
-        elif msg.encoding == 'bayer_bggr16' or msg.encoding == 'bayer_rggb16' or msg.encoding == 'mono16':
+        elif msg.encoding in ('bayer_bggr16', 'bayer_rggb16', 'bayer_gbrg16', 'bayer_grbg16', 'mono16'):
             channels, dtype = 1, np.uint16
-        elif msg.encoding == 'bgr16':
+        elif msg.encoding in ('bgr16', 'rgb16'):
             channels, dtype = 3, np.uint16
-        elif msg.encoding == 'bgra16':
+        elif msg.encoding in ('bgra16', 'rgba16'):
             channels, dtype = 4, np.uint16
         else:
             print(f"Unknown image encoding `{msg.encoding}`")
@@ -54,13 +54,18 @@ class Ros2ImageViewer(Node):
         else:
             img = np.array(msg.data, dtype=dtype).reshape(msg.height, msg.width)
 
-        # If the encoding is a Bayer pattern, convert to BGR
-        if msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16":
-            print("Converting Bayer to BGR")
-            img = cv2.cvtColor(img, cv2.COLOR_BayerRG2BGR)
-        elif msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16":
-            print("Converting Bayer to BGR")
-            img = cv2.cvtColor(img, cv2.COLOR_BayerBG2BGR)
+        # Convert Bayer and RGB encodings to BGR
+        to_bgr_codes = {
+            "bayer_bggr": cv2.COLOR_BayerBGGR2BGR,
+            "bayer_rggb": cv2.COLOR_BayerRGGB2BGR,
+            "bayer_gbrg": cv2.COLOR_BayerGBRG2BGR,
+            "bayer_grbg": cv2.COLOR_BayerGRBG2BGR,
+            "rgb": cv2.COLOR_RGB2BGR,
+            "rgba": cv2.COLOR_RGBA2BGR,
+        }
+        pattern = msg.encoding.rstrip("0123456789")
+        if pattern in to_bgr_codes:
+            img = cv2.cvtColor(img, to_bgr_codes[pattern])
         return img
 
     def on_new_image(self, msg):

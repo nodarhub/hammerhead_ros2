@@ -9,3 +9,5 @@ obstacle_data/
 # The site data can be large. Do not commit it.
 docs/
 site/
+# Python bytecode
+__pycache__/

@@ -15,17 +15,19 @@ void signalHandler(int signum) {
 bool fromMessage(const sensor_msgs::msg::Image& msg, cv::Mat& img) {
     // Get the type
     int cv_type = -1;
-    if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_rggb8" or msg.encoding == "mono8") {
+    if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_gbrg8" or
+        msg.encoding == "bayer_grbg8" or msg.encoding == "mono8") {
         cv_type = CV_8UC1;
-    } else if (msg.encoding == "bgr8") {
+    } else if (msg.encoding == "bgr8" or msg.encoding == "rgb8") {
         cv_type = CV_8UC3;
-    } else if (msg.encoding == "bgra8") {
+    } else if (msg.encoding == "bgra8" or msg.encoding == "rgba8") {
         cv_type = CV_8UC4;
-    } else if (msg.encoding == "bayer_bggr16" or msg.encoding == "bayer_rggb16" or msg.encoding == "mono16") {
+    } else if (msg.encoding == "bayer_bggr16" or msg.encoding == "bayer_rggb16" or msg.encoding == "bayer_gbrg16" or
+               msg.encoding == "bayer_grbg16" or msg.encoding == "mono16") {
         cv_type = CV_16UC1;
-    } else if (msg.encoding == "bgr16") {
+    } else if (msg.encoding == "bgr16" or msg.encoding == "rgb16") {
         cv_type = CV_16UC3;
-    } else if (msg.encoding == "bgra16") {
+    } else if (msg.encoding == "bgra16" or msg.encoding == "rgba16") {
         cv_type = CV_16UC4;
     } else {
         std::cerr << "Unknown image encoding `" << msg.encoding << "`\n";
@@ -46,9 +48,17 @@ bool fromMessage(const sensor_msgs::msg::Image& msg, cv::Mat& img) {
 
     // If the encoding is a Bayer pattern, convert to BGR
     if (msg.encoding == "bayer_bggr8" or msg.encoding == "bayer_bggr16") {
-        cv::cvtColor(img, img, cv::COLOR_BayerRG2BGR);
+        cv::cvtColor(img, img, cv::COLOR_BayerBGGR2BGR);
     } else if (msg.encoding == "bayer_rggb8" or msg.encoding == "bayer_rggb16") {
-        cv::cvtColor(img, img, cv::COLOR_BayerBG2BGR);
+        cv::cvtColor(img, img, cv::COLOR_BayerRGGB2BGR);
+    } else if (msg.encoding == "bayer_gbrg8" or msg.encoding == "bayer_gbrg16") {
+        cv::cvtColor(img, img, cv::COLOR_BayerGBRG2BGR);
+    } else if (msg.encoding == "bayer_grbg8" or msg.encoding == "bayer_grbg16") {
+        cv::cvtColor(img, img, cv::COLOR_BayerGRBG2BGR);
+    } else if (msg.encoding == "rgb8" or msg.encoding == "rgb16") {
+        cv::cvtColor(img, img, cv::COLOR_RGB2BGR);
+    } else if (msg.encoding == "rgba8" or msg.encoding == "rgba16") {
+        cv::cvtColor(img, img, cv::COLOR_RGBA2BGR);
     }
     return true;
 }
